@@ -443,6 +443,23 @@ Recommendations: ${state.currentAnalysis.recommendations}`;
       }
     });
   }
+
+  // Quick Demo Links Click Handler
+  const demoLinksRow = document.getElementById('demoLinksRow');
+  if (demoLinksRow) {
+    demoLinksRow.addEventListener('click', (e) => {
+      const chip = e.target.closest('.demo-link-chip');
+      if (!chip) return;
+      const url = chip.getAttribute('data-url');
+      if (url && elements.urlInput) {
+        elements.urlInput.value = url;
+        elements.urlInput.focus();
+        // Trigger quick pulse effect on analyze button
+        elements.btnAnalyze.style.animation = 'pulse-glow 0.8s ease 2';
+        setTimeout(() => { elements.btnAnalyze.style.animation = ''; }, 1600);
+      }
+    });
+  }
 }
 
 // Trigger Threat Analysis with Interactive HUD Telemetry
