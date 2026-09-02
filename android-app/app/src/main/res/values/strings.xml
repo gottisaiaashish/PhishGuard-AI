@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">PhishGuard AI</string>
+    <string name="shield_active">Zero-Day Shield Active</string>
+    <string name="shield_desc">Real-time notification listener intercepts phishing links across WhatsApp, SMS, and Gmail.</string>
+    <string name="grant_permission">Grant Notification Access</string>
+    <string name="test_scam">Simulate Incoming Scam SMS</string>
+    <string name="intercepted_count">Notifications Monitored</string>
+    <string name="threats_blocked">Threats Quarantined</string>
+</resources>

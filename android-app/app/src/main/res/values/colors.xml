@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg_dark">#0B0F19</color>
+    <color name="card_bg">#131B2E</color>
+    <color name="card_stroke">#1E293B</color>
+    <color name="accent_cyan">#00F0FF</color>
+    <color name="threat_danger">#FF3366</color>
+    <color name="threat_safe">#00FF9D</color>
+    <color name="threat_warning">#FFB800</color>
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#94A3B8</color>
+    <color name="cyan_translucent">#1A00F0FF</color>
+    <color name="danger_translucent">#26FF3366</color>
+</resources>

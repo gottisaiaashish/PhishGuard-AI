@@ -26,6 +26,13 @@ venv/
 .venv/
 env/
 
+# Android
+.gradle/
+**/build/
+local.properties
+*.iml
+.idea/
+
 # Editor & OS files
 .vscode/*
 !.vscode/extensions.json
