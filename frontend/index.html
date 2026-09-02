@@ -336,47 +336,6 @@
       </div>
     </section>
 
-    <!-- Scan History Section -->
-    <section class="history-section" aria-label="Scan History">
-      <div class="history-header">
-        <div class="history-title-group">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2">
-            <circle cx="12" cy="12" r="10"></circle>
-            <polyline points="12 6 12 12 16 14"></polyline>
-          </svg>
-          <h2 class="history-title">Recent Threat Scan History</h2>
-        </div>
-
-        <div class="history-controls">
-          <input type="text" id="historySearch" class="history-search-input" placeholder="Filter by domain or sender...">
-          <button type="button" class="btn-secondary" id="btnClearHistory" style="padding: 0.4rem 0.75rem; font-size: 0.75rem;">
-            Clear Log
-          </button>
-        </div>
-      </div>
-
-      <div class="history-table-card">
-        <div style="overflow-x: auto;">
-          <table class="history-table">
-            <thead>
-              <tr>
-                <th>Scan ID & Time</th>
-                <th>Channel</th>
-                <th>Target / Origin</th>
-                <th>Content Snippet</th>
-                <th>Risk Score</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody id="historyTableBody">
-              <!-- Rendered via JS -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
     <!-- Inspection Detail Modal -->
     <div class="modal-overlay" id="historyModal">
       <div class="modal-box">

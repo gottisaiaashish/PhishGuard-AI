@@ -387,17 +387,21 @@ Recommendations: ${state.currentAnalysis.recommendations}`;
   });
 
   // History Search
-  elements.historySearch.addEventListener('input', (e) => {
-    renderHistoryTable(e.target.value);
-  });
+  if (elements.historySearch) {
+    elements.historySearch.addEventListener('input', (e) => {
+      renderHistoryTable(e.target.value);
+    });
+  }
 
   // Clear History
-  elements.btnClearHistory.addEventListener('click', () => {
-    if (confirm('Clear all local scan history?')) {
-      state.history = [];
-      saveHistory();
-    }
-  });
+  if (elements.btnClearHistory) {
+    elements.btnClearHistory.addEventListener('click', () => {
+      if (confirm('Clear all local scan history?')) {
+        state.history = [];
+        saveHistory();
+      }
+    });
+  }
 }
 
 // Trigger Threat Analysis with Interactive HUD Telemetry
@@ -603,6 +607,7 @@ function animateGauge(targetScore, statusClass) {
 // Render History Table
 function renderHistoryTable(filterText = '') {
   const tbody = elements.historyTableBody;
+  if (!tbody) return;
   tbody.innerHTML = '';
 
   const query = filterText.toLowerCase().trim();
