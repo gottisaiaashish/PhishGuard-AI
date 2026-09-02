@@ -377,14 +377,24 @@ Instructions:
 
     # Fallback response
     q_low = question.lower()
-    if any(k in q_low for k in ["clicked", "opened", "already", "entered"]):
+    main_domain = "the link"
+    if ctx.get("urls") and len(ctx["urls"]) > 0:
+        main_domain = ctx["urls"][0].get("domain", "the domain")
+    elif ctx.get("urlsFound") and len(ctx["urlsFound"]) > 0:
+        main_domain = ctx["urlsFound"][0]
+
+    if any(k in q_low for k in ["link", "suspicious", "spiceous", "why", "fake", "domain", "url"]):
         return {
-            "answer": "### 🚨 Immediate Incident Response Steps:\n1. **Disconnect from the Page**: Close the tab immediately.\n2. **Do Not Submit Info**: Never enter passwords, OTPs, or debit card PINs.\n3. **Rotate Passwords**: From another trusted device, reset your account credentials.\n4. **Alert Your Bank**: Call the official emergency fraud number on the back of your card to block unauthorized transactions."
+            "answer": f"### 🔍 Why This Link is Flagged as Suspicious:\n\n1. **Deceptive Lookalike Domain**: The URL uses `{main_domain}`, which mimics trusted institutions to deceive victims.\n2. **Urgency Manipulation**: The communication uses forced urgency to prevent you from inspecting the link's genuine destination.\n3. **Credential Theft Hazard**: Pages behind these links typically mimic real portals to steal account logins or banking OTPs.\n\n💡 **Safe Action**: Never click the link. Visit the official service directly through your browser."
         }
-    elif any(k in q_low for k in ["report", "it team", "company"]):
+    elif any(k in q_low for k in ["clicked", "opened", "already", "entered", "password"]):
         return {
-            "answer": f"### 📋 Incident Report Template:\n- **Incident Type**: Suspected Phishing Lure\n- **Target Origin**: {ctx.get('target', 'Unknown')}\n- **Risk Assessment**: {ctx.get('score', 90)}/100 ({ctx.get('status', 'High Risk')})\n- **Action Taken**: Flagged and quarantined via PhishGuard AI."
+            "answer": "### 🚨 Immediate Incident Response Steps:\n\n1. **Disconnect from the Page**: Close the browser tab immediately.\n2. **Do Not Submit Info**: Never enter passwords, OTPs, or debit card PINs.\n3. **Rotate Passwords**: From another trusted device, reset your account credentials.\n4. **Alert Your Bank**: Call the official emergency fraud helpline on your card to block unauthorized transactions."
+        }
+    elif any(k in q_low for k in ["report", "it team", "company", "manager"]):
+        return {
+            "answer": f"### 📋 Incident Report Template:\n\n- **Incident Type**: Suspected Phishing Lure\n- **Target Origin**: {ctx.get('target', 'Unknown')}\n- **Target URL**: {main_domain}\n- **Risk Assessment**: {ctx.get('score', 85)}/100 ({ctx.get('status', 'High Risk')})\n- **Action Taken**: Flagged and quarantined via PhishGuard AI."
         }
     return {
-        "answer": "### 🛡️ PhishGuard Security Advisory:\n- **Verdict**: The message contains deceptive patterns typical of financial phishing.\n- **Rule**: Legitimate institutions never demand immediate card verification through generic SMS or shortened URLs.\n- **Recommended Action**: Delete this message immediately and block the sender."
+        "answer": "### 🛡️ PhishGuard Security Advisory:\n\n1. **High-Risk Indicators**: The analyzed message exhibits patterns characteristic of brand impersonation and urgency coercion.\n2. **Golden Rule**: Legitimate institutions will never ask you to verify credentials through unverified links or SMS.\n3. **Next Step**: Delete this message immediately and block the sender."
     }

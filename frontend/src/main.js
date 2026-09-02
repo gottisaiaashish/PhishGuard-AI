@@ -740,11 +740,66 @@ async function handleChatFollowUp(question) {
 
 function formatMarkdownToHtml(md) {
   if (!md) return '';
-  return md
-    .replace(/### (.*?)\n/g, '<h4 style="color:#ffffff;margin-top:0.5rem;margin-bottom:0.35rem;font-size:0.98rem;">$1</h4>')
-    .replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--accent-cyan);">$1</strong>')
-    .replace(/^- (.*?)$/gm, '<li style="margin-left:1.2rem; margin-bottom: 0.3rem;">$1</li>')
-    .replace(/\n\n/g, '<br>');
+  
+  const lines = md.split('\n');
+  const htmlParts = [];
+  
+  for (let rawLine of lines) {
+    let line = rawLine.trim();
+    if (!line) {
+      htmlParts.push('<div style="height: 0.35rem;"></div>');
+      continue;
+    }
+    
+    // Headings
+    if (line.startsWith('### ')) {
+      const heading = line.replace(/^###\s+/, '');
+      htmlParts.push(`<h4 style="color: #ffffff; margin-top: 0.65rem; margin-bottom: 0.35rem; font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: 0.4rem;">${heading}</h4>`);
+      continue;
+    }
+    if (line.startsWith('## ')) {
+      const heading = line.replace(/^##\s+/, '');
+      htmlParts.push(`<h3 style="color: var(--accent-cyan); margin-top: 0.75rem; margin-bottom: 0.4rem; font-size: 1.08rem; font-weight: 700;">${heading}</h3>`);
+      continue;
+    }
+
+    // Bold formatting
+    line = line.replace(/\*\*(.*?)\*\*/g, '<strong style="color: #ffffff; font-weight: 600;">$1</strong>');
+    
+    // Inline code formatting
+    line = line.replace(/`([^`]+)`/g, '<code style="background: rgba(0, 240, 255, 0.12); color: var(--accent-cyan); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.85em;">$1</code>');
+
+    // Numbered List: 1. , 2. , etc.
+    const numMatch = line.match(/^(\d+)\.\s+(.*)$/);
+    if (numMatch) {
+      const num = numMatch[1];
+      const content = numMatch[2];
+      htmlParts.push(`
+        <div style="display: flex; gap: 0.6rem; margin: 0.45rem 0; align-items: flex-start; line-height: 1.55;">
+          <span style="background: rgba(0, 240, 255, 0.15); color: var(--accent-cyan); font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700; padding: 0.15rem 0.45rem; border-radius: 50%; min-width: 1.35rem; height: 1.35rem; display: inline-flex; align-items: center; justify-content: center; margin-top: 0.15rem; flex-shrink: 0;">${num}</span>
+          <div style="color: #e2e8f0; font-size: 0.92rem;">${content}</div>
+        </div>
+      `);
+      continue;
+    }
+
+    // Bullet points: - or *
+    if (line.startsWith('- ') || line.startsWith('* ')) {
+      const content = line.substring(2);
+      htmlParts.push(`
+        <div style="display: flex; gap: 0.55rem; margin: 0.35rem 0 0.35rem 0.4rem; align-items: flex-start; line-height: 1.55;">
+          <span style="color: var(--accent-cyan); font-size: 1.1rem; line-height: 1; flex-shrink: 0;">•</span>
+          <div style="color: #e2e8f0; font-size: 0.92rem;">${content}</div>
+        </div>
+      `);
+      continue;
+    }
+
+    // Standard paragraph line
+    htmlParts.push(`<p style="margin: 0.35rem 0; color: #e2e8f0; font-size: 0.92rem; line-height: 1.6;">${line}</p>`);
+  }
+
+  return htmlParts.join('');
 }
 
 // Animate Circular SVG Gauge
