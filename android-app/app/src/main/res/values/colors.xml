@@ -1,14 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="bg_dark">#0B0F19</color>
-    <color name="card_bg">#131B2E</color>
+    <color name="bg_dark">#080D1A</color>
+    <color name="surface_dark">#0F172A</color>
+    <color name="card_bg">#131D35</color>
     <color name="card_stroke">#1E293B</color>
-    <color name="accent_cyan">#00F0FF</color>
+    <color name="input_bg">#0D1527</color>
+    <color name="nav_bg">#0A1020</color>
+    
+    <!-- Security Accents -->
+    <color name="accent_cyan">#00D2D3</color>
+    <color name="accent_cyan_bright">#00FFFF</color>
     <color name="threat_danger">#FF3366</color>
-    <color name="threat_safe">#00FF9D</color>
-    <color name="threat_warning">#FFB800</color>
-    <color name="text_primary">#FFFFFF</color>
+    <color name="threat_safe">#00E676</color>
+    <color name="threat_warning">#FFAA00</color>
+    
+    <!-- Text Colors -->
+    <color name="text_primary">#F8FAFC</color>
     <color name="text_secondary">#94A3B8</color>
-    <color name="cyan_translucent">#1A00F0FF</color>
+    <color name="text_muted">#64748B</color>
+    <color name="divider_color">#1E293B</color>
+    
+    <!-- Translucent overlays -->
+    <color name="cyan_translucent">#1F00D2D3</color>
     <color name="danger_translucent">#26FF3366</color>
+    <color name="safe_translucent">#2600E676</color>
+    <color name="warning_translucent">#26FFAA00</color>
 </resources>

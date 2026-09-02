@@ -67,6 +67,18 @@ object ThreatScanner {
 
         if (isInstantThreat) {
             Log.e(TAG, "⚡ INSTANT THREAT DETECTED! Alerting user immediately.")
+            try {
+                com.phishguard.ai.data.repository.ScanRepository(context).saveScan(
+                    scanType = "NOTIFICATION_INTERCEPT",
+                    content = "From $sender: $messageText",
+                    riskScore = 95,
+                    verdict = "HIGH_RISK",
+                    details = "Dangerous phishing or financial lure intercepted."
+                )
+            } catch (e: Exception) {
+                // Ignore DB error
+            }
+
             LiveNotificationTracker.addLog(
                 InterceptedLog(
                     time = currentTime,
