@@ -171,6 +171,18 @@ Respond strictly with a JSON object containing:
                 }
 
                 // If AI found it clean or non-threat
+                try {
+                    com.phishguard.ai.data.repository.ScanRepository(context).saveScan(
+                        scanType = "NOTIFICATION_INTERCEPT",
+                        content = "From $sender: $messageText",
+                        riskScore = 0,
+                        verdict = "SAFE",
+                        details = "Verified clean communication."
+                    )
+                } catch (e: Exception) {
+                    // Ignore DB error
+                }
+
                 LiveNotificationTracker.addLog(
                     InterceptedLog(
                         time = currentTime,
@@ -184,6 +196,18 @@ Respond strictly with a JSON object containing:
             }
         } else {
             // Regular chat message (e.g. "hi", "how are you")
+            try {
+                com.phishguard.ai.data.repository.ScanRepository(context).saveScan(
+                    scanType = "NOTIFICATION_INTERCEPT",
+                    content = "From $sender: $messageText",
+                    riskScore = 0,
+                    verdict = "SAFE",
+                    details = "Safe message."
+                )
+            } catch (e: Exception) {
+                // Ignore DB error
+            }
+
             LiveNotificationTracker.addLog(
                 InterceptedLog(
                     time = currentTime,
