@@ -6,14 +6,14 @@
     android:background="@color/bg_dark"
     android:orientation="vertical">
 
-    <!-- Top Bar -->
+    <!-- Top Bar with Integrated Language Settings & Clear Buttons -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/surface_dark"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingHorizontal="20dp"
+        android:paddingHorizontal="18dp"
         android:paddingVertical="14dp">
 
         <ImageView
@@ -33,106 +33,51 @@
                 android:layout_height="wrap_content"
                 android:text="PhishGuard Assistant"
                 android:textColor="@color/text_primary"
-                android:textSize="16sp"
+                android:textSize="15sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/tvAssistantLangIndicator"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="1dp"
                 android:text="Online • English"
                 android:textColor="@color/accent_cyan"
                 android:textSize="11sp" />
         </LinearLayout>
 
-        <TextView
+        <!-- Language Selector Icon Button -->
+        <ImageView
+            android:id="@+id/btnAssistantSettings"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:contentDescription="Select Language"
+            android:focusable="true"
+            android:padding="7dp"
+            android:src="@drawable/ic_globe"
+            app:tint="@color/accent_cyan" />
+
+        <!-- Clear Chat Icon Button -->
+        <ImageView
             android:id="@+id/btnClearChat"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:padding="6dp"
-            android:text="Clear"
-            android:textColor="@color/text_muted"
-            android:textSize="12sp" />
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="4dp"
+            android:background="?selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:contentDescription="Clear Conversation"
+            android:focusable="true"
+            android:padding="7dp"
+            android:src="@drawable/ic_trash"
+            app:tint="@color/text_muted" />
     </LinearLayout>
 
-    <!-- Language Selector Horizontal Scroll -->
-    <HorizontalScrollView
+    <View
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/bg_dark"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="8dp"
-        android:scrollbars="none">
-
-        <com.google.android.material.chip.ChipGroup
-            android:id="@+id/chipGroupLanguages"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:singleSelection="true">
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipLangEnglish"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:checked="true"
-                android:text="English"
-                android:textColor="@color/text_primary"
-                app:chipBackgroundColor="@color/card_bg"
-                app:chipStrokeColor="@color/accent_cyan" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipLangTelugu"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="తెలుగు"
-                android:textColor="@color/text_primary"
-                app:chipBackgroundColor="@color/card_bg"
-                app:chipStrokeColor="@color/card_stroke" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipLangHindi"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="हिंदी"
-                android:textColor="@color/text_primary"
-                app:chipBackgroundColor="@color/card_bg"
-                app:chipStrokeColor="@color/card_stroke" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipLangTamil"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="தமிழ்"
-                android:textColor="@color/text_primary"
-                app:chipBackgroundColor="@color/card_bg"
-                app:chipStrokeColor="@color/card_stroke" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipLangKannada"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="ಕನ್ನಡ"
-                android:textColor="@color/text_primary"
-                app:chipBackgroundColor="@color/card_bg"
-                app:chipStrokeColor="@color/card_stroke" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipLangMalayalam"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="മലയാളം"
-                android:textColor="@color/text_primary"
-                app:chipBackgroundColor="@color/card_bg"
-                app:chipStrokeColor="@color/card_stroke" />
-
-        </com.google.android.material.chip.ChipGroup>
-    </HorizontalScrollView>
+        android:layout_height="1dp"
+        android:background="#131D33" />
 
     <!-- Chat Messages Scroll Area -->
     <ScrollView
@@ -142,7 +87,7 @@
         android:layout_weight="1"
         android:fillViewport="true"
         android:paddingHorizontal="16dp"
-        android:paddingVertical="8dp">
+        android:paddingVertical="12dp">
 
         <LinearLayout
             android:id="@+id/containerChatMessages"
@@ -185,7 +130,7 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSendChat"
-            android:layout_width="54dp"
+            android:layout_width="44dp"
             android:layout_height="44dp"
             android:layout_marginStart="8dp"
             android:backgroundTint="@color/accent_cyan"
@@ -194,11 +139,12 @@
             android:insetRight="0dp"
             android:insetBottom="0dp"
             android:padding="0dp"
-            android:text="➤"
-            android:textColor="@color/bg_dark"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            app:cornerRadius="10dp" />
+            app:cornerRadius="10dp"
+            app:icon="@drawable/ic_send"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp"
+            app:iconSize="20dp"
+            app:iconTint="@color/bg_dark" />
 
     </LinearLayout>
 

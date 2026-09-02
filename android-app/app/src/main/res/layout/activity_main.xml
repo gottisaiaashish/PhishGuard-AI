@@ -3,25 +3,37 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_dark">
+    android:background="@color/bg_dark"
+    android:fitsSystemWindows="true">
 
     <!-- Fragment Display Container -->
     <FrameLayout
         android:id="@+id/fragmentContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@id/bottomNavigation" />
+        android:layout_above="@id/bottomNavDivider" />
 
-    <!-- Sleek Cyber Bottom Navigation -->
+    <!-- Thin 1dp Top Border Line for Navigation Bar -->
+    <View
+        android:id="@+id/bottomNavDivider"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_above="@id/bottomNavigation"
+        android:background="#131D33" />
+
+    <!-- Clean Sleek Bottom Navigation (No Clumsy Pill, Crisp Labels) -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigation"
         android:layout_width="match_parent"
-        android:layout_height="64dp"
+        android:layout_height="58dp"
         android:layout_alignParentBottom="true"
         android:background="@color/nav_bg"
-        app:elevation="8dp"
-        app:itemIconSize="22dp"
+        app:elevation="0dp"
+        app:itemActiveIndicatorStyle="@style/NoActiveIndicator"
+        app:itemIconSize="21dp"
         app:itemIconTint="@color/nav_item_colors"
+        app:itemTextAppearanceActive="@style/BottomNavText"
+        app:itemTextAppearanceInactive="@style/BottomNavText"
         app:itemTextColor="@color/nav_item_colors"
         app:labelVisibilityMode="labeled"
         app:menu="@menu/bottom_nav_menu" />

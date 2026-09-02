@@ -6,5 +6,23 @@
         <item name="colorPrimary">@color/accent_cyan</item>
         <item name="colorOnPrimary">#000000</item>
         <item name="colorSurface">@color/card_bg</item>
+        <item name="bottomNavigationStyle">@style/CustomBottomNavStyle</item>
+    </style>
+
+    <style name="CustomBottomNavStyle" parent="Widget.Material3.BottomNavigationView">
+        <item name="itemActiveIndicatorStyle">@style/NoActiveIndicator</item>
+        <item name="itemTextAppearanceActive">@style/BottomNavText</item>
+        <item name="itemTextAppearanceInactive">@style/BottomNavText</item>
+    </style>
+
+    <style name="NoActiveIndicator">
+        <item name="android:color">@android:color/transparent</item>
+        <item name="android:width">0dp</item>
+        <item name="android:height">0dp</item>
+    </style>
+
+    <style name="BottomNavText">
+        <item name="android:textSize">10sp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
     </style>
 </resources>

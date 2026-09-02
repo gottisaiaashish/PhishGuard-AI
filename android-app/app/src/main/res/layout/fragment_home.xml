@@ -10,9 +10,11 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="20dp">
+        android:paddingHorizontal="20dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="24dp">
 
-        <!-- Header -->
+        <!-- Top Header (No Clumsy Emojis, No Protected Pill) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -20,15 +22,15 @@
             android:orientation="horizontal">
 
             <ImageView
-                android:layout_width="42dp"
-                android:layout_height="42dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:contentDescription="PhishGuard AI Logo"
                 android:src="@drawable/phishguard_logo" />
 
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
+                android:layout_marginStart="14dp"
                 android:layout_weight="1"
                 android:orientation="vertical">
 
@@ -36,33 +38,45 @@
                     android:id="@+id/tvHomeUserGreeting"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Welcome, Sai"
+                    android:text="Hello, User"
                     android:textColor="@color/text_primary"
-                    android:textSize="17sp"
+                    android:textSize="18sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
                     android:text="Real-time Shield Active"
-                    android:textColor="@color/text_secondary"
+                    android:textColor="@color/accent_cyan"
                     android:textSize="12sp" />
             </LinearLayout>
 
-            <TextView
-                android:id="@+id/tvHomeShieldStatusBadge"
+            <!-- Minimalist Status Dot -->
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/card_safe_border"
-                android:paddingHorizontal="10dp"
-                android:paddingVertical="5dp"
-                android:text="PROTECTED 🟢"
-                android:textColor="@color/threat_safe"
-                android:textSize="11sp"
-                android:textStyle="bold" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <View
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:background="@drawable/card_safe_border"
+                    android:backgroundTint="@color/threat_safe" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:text="Active"
+                    android:textColor="@color/threat_safe"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
         </LinearLayout>
 
-        <!-- Main Security Card -->
+        <!-- Digital Safety Overview Card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -76,7 +90,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="20dp">
+                android:padding="18dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -85,9 +99,9 @@
                     android:orientation="horizontal">
 
                     <ImageView
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:src="@drawable/ic_nav_scan"
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:src="@drawable/ic_shield_check"
                         app:tint="@color/accent_cyan" />
 
                     <LinearLayout
@@ -102,30 +116,32 @@
                             android:layout_height="wrap_content"
                             android:text="Digital Safety Layer"
                             android:textColor="@color/text_primary"
-                            android:textSize="16sp"
+                            android:textSize="15sp"
                             android:textStyle="bold" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="1dp"
                             android:text="AI-powered background scanning"
                             android:textColor="@color/text_secondary"
                             android:textSize="12sp" />
                     </LinearLayout>
                 </LinearLayout>
 
-                <!-- Persistent User Stats Grid -->
+                <!-- Persistent Stats Grid (Clean Minimalist Cards) -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:orientation="horizontal">
 
+                    <!-- Stat 1 -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:background="@drawable/card_cyan_border"
+                        android:background="@drawable/bg_input_box"
                         android:orientation="vertical"
                         android:padding="12dp">
 
@@ -141,17 +157,19 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
                             android:text="Total Scans"
                             android:textColor="@color/text_secondary"
                             android:textSize="11sp" />
                     </LinearLayout>
 
+                    <!-- Stat 2 -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:layout_weight="1"
-                        android:background="@drawable/card_danger_border"
+                        android:background="@drawable/bg_input_box"
                         android:orientation="vertical"
                         android:padding="12dp">
 
@@ -167,17 +185,19 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
                             android:text="Threats Blocked"
                             android:textColor="@color/text_secondary"
                             android:textSize="11sp" />
                     </LinearLayout>
 
+                    <!-- Stat 3 -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:layout_weight="1"
-                        android:background="@drawable/card_safe_border"
+                        android:background="@drawable/bg_input_box"
                         android:orientation="vertical"
                         android:padding="12dp">
 
@@ -193,6 +213,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
                             android:text="Monitored"
                             android:textColor="@color/text_secondary"
                             android:textSize="11sp" />
@@ -206,19 +227,20 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
+            android:layout_marginTop="22dp"
             android:text="Quick Actions"
             android:textColor="@color/text_primary"
-            android:textSize="15sp"
+            android:textSize="14sp"
             android:textStyle="bold" />
 
-        <!-- Quick Action Buttons -->
+        <!-- Quick Action Buttons (Vector Icons, No Emojis) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="10dp"
             android:orientation="horizontal">
 
+            <!-- Scan Message -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/btnQuickScanMessage"
                 android:layout_width="0dp"
@@ -227,7 +249,7 @@
                 android:clickable="true"
                 android:focusable="true"
                 app:cardBackgroundColor="@color/card_bg"
-                app:cardCornerRadius="12dp"
+                app:cardCornerRadius="14dp"
                 app:strokeColor="@color/card_stroke"
                 app:strokeWidth="1dp">
 
@@ -236,25 +258,28 @@
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="14dp">
+                    android:paddingVertical="16dp"
+                    android:paddingHorizontal="8dp">
+
+                    <ImageView
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:src="@drawable/ic_action_message"
+                        app:tint="@color/accent_cyan" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="💬"
-                        android:textSize="22sp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="Scan Message"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center"
+                        android:text="Scan\nMessage"
                         android:textColor="@color/text_primary"
                         android:textSize="12sp"
                         android:textStyle="bold" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Check URL -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/btnQuickScanLink"
                 android:layout_width="0dp"
@@ -264,7 +289,7 @@
                 android:clickable="true"
                 android:focusable="true"
                 app:cardBackgroundColor="@color/card_bg"
-                app:cardCornerRadius="12dp"
+                app:cardCornerRadius="14dp"
                 app:strokeColor="@color/card_stroke"
                 app:strokeWidth="1dp">
 
@@ -273,25 +298,28 @@
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="14dp">
+                    android:paddingVertical="16dp"
+                    android:paddingHorizontal="8dp">
+
+                    <ImageView
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:src="@drawable/ic_action_link"
+                        app:tint="@color/accent_cyan" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="🔗"
-                        android:textSize="22sp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="Check URL"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center"
+                        android:text="Check\nURL"
                         android:textColor="@color/text_primary"
                         android:textSize="12sp"
                         android:textStyle="bold" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- AI Assistant -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/btnQuickAssistant"
                 android:layout_width="0dp"
@@ -301,7 +329,7 @@
                 android:clickable="true"
                 android:focusable="true"
                 app:cardBackgroundColor="@color/card_bg"
-                app:cardCornerRadius="12dp"
+                app:cardCornerRadius="14dp"
                 app:strokeColor="@color/card_stroke"
                 app:strokeWidth="1dp">
 
@@ -310,33 +338,33 @@
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="14dp">
+                    android:paddingVertical="16dp"
+                    android:paddingHorizontal="8dp">
+
+                    <ImageView
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:src="@drawable/ic_action_ai"
+                        app:tint="@color/accent_cyan" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="🤖"
-                        android:textSize="22sp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="AI Assistant"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center"
+                        android:text="AI\nAssistant"
                         android:textColor="@color/text_primary"
                         android:textSize="12sp"
                         android:textStyle="bold" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
-
         </LinearLayout>
 
-        <!-- Real-Time Activity Feed Card -->
+        <!-- Live Protection Feed Card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginTop="22dp"
             app:cardBackgroundColor="@color/card_bg"
             app:cardCornerRadius="16dp"
             app:strokeColor="@color/card_stroke"
@@ -354,19 +382,27 @@
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_action_radar"
+                        app:tint="@color/accent_cyan" />
+
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
                         android:layout_weight="1"
-                        android:text="📡 Live Protection Feed"
+                        android:text="Live Protection Feed"
                         android:textColor="@color/text_primary"
-                        android:textSize="15sp"
+                        android:textSize="14sp"
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/tvLiveStatus"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="ACTIVE 🟢"
+                        android:text="● ACTIVE"
                         android:textColor="@color/threat_safe"
                         android:textSize="11sp"
                         android:textStyle="bold" />
@@ -374,13 +410,15 @@
 
                 <TextView
                     android:id="@+id/tvHomeFeedEmpty"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
+                    android:lineSpacingExtra="3dp"
                     android:text="Protection layer is active. Incoming WhatsApp and SMS notifications will appear here automatically."
                     android:textColor="@color/text_secondary"
                     android:textSize="12sp" />
 
+                <!-- Container for live feed logs -->
                 <LinearLayout
                     android:id="@+id/containerHomeFeed"
                     android:layout_width="match_parent"

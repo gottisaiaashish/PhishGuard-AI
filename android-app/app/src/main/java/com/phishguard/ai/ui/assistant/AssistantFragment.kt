@@ -10,6 +10,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.card.MaterialCardView
@@ -54,35 +56,53 @@ class AssistantFragment : Fragment() {
         sessionManager = SessionManager.getInstance(requireContext())
 
         currentLanguage = sessionManager.getUserLanguage()
-        setupLanguageChips()
+        setupLanguageSelector()
+        setupClearChatButton()
         loadSavedMessages()
         setupSendButton()
     }
 
-    private fun setupLanguageChips() {
-        binding.chipGroupLanguages.setOnCheckedStateChangeListener { _, checkedIds ->
-            if (checkedIds.isNotEmpty()) {
-                currentLanguage = when (checkedIds[0]) {
-                    R.id.chipLangTelugu -> "Telugu"
-                    R.id.chipLangHindi -> "Hindi"
-                    R.id.chipLangTamil -> "Tamil"
-                    R.id.chipLangKannada -> "Kannada"
-                    R.id.chipLangMalayalam -> "Malayalam"
-                    else -> "English"
-                }
-                sessionManager.setLanguage(currentLanguage)
-                binding.tvAssistantLangIndicator.text = "Online • $currentLanguage"
-            }
-        }
+    private fun setupLanguageSelector() {
+        binding.tvAssistantLangIndicator.text = "Online • $currentLanguage"
+        binding.btnAssistantSettings.setOnClickListener {
+            val languages = arrayOf(
+                "English",
+                "Telugu (తెలుగు)",
+                "Hindi (हिंदी)",
+                "Tamil (தமிழ்)",
+                "Kannada (ಕನ್ನಡ)",
+                "Malayalam (മലയാളം)"
+            )
+            val langValues = arrayOf("English", "Telugu", "Hindi", "Tamil", "Kannada", "Malayalam")
 
-        // Set initial chip state
-        when (currentLanguage) {
-            "Telugu" -> binding.chipLangTelugu.isChecked = true
-            "Hindi" -> binding.chipLangHindi.isChecked = true
-            "Tamil" -> binding.chipLangTamil.isChecked = true
-            "Kannada" -> binding.chipLangKannada.isChecked = true
-            "Malayalam" -> binding.chipLangMalayalam.isChecked = true
-            else -> binding.chipLangEnglish.isChecked = true
+            AlertDialog.Builder(requireContext())
+                .setTitle("Assistant Language")
+                .setItems(languages) { _, which ->
+                    currentLanguage = langValues[which]
+                    sessionManager.setLanguage(currentLanguage)
+                    binding.tvAssistantLangIndicator.text = "Online • $currentLanguage"
+                    val userId = sessionManager.getUserId()
+                    if (userId > 0) {
+                        db.updateUserLanguage(userId, currentLanguage)
+                    }
+                    Toast.makeText(requireContext(), "Language set to $currentLanguage", Toast.LENGTH_SHORT).show()
+                }
+                .show()
+        }
+    }
+
+    private fun setupClearChatButton() {
+        binding.btnClearChat.setOnClickListener {
+            AlertDialog.Builder(requireContext())
+                .setTitle("Clear Conversation")
+                .setMessage("Delete all chat messages?")
+                .setPositiveButton("Clear") { _, _ ->
+                    val userId = sessionManager.getUserId().let { if (it > 0) it else 1L }
+                    db.clearUserChat(userId)
+                    loadSavedMessages()
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
         }
     }
 

@@ -280,4 +280,9 @@ class AppDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, n
         }
         return list
     }
+
+    fun clearUserChat(userId: Long) {
+        val db = writableDatabase
+        db.delete("chat_messages", "user_id = ?", arrayOf(userId.toString()))
+    }
 }

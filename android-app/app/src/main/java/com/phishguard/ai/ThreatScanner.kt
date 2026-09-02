@@ -86,7 +86,7 @@ object ThreatScanner {
                     sender = sender,
                     text = messageText,
                     isThreat = true,
-                    verdict = "🚨 Phishing Scam Link Blocked"
+                    verdict = "Phishing Scam Link Blocked"
                 )
             )
             dispatchSecurityAlert(
@@ -153,7 +153,7 @@ Respond strictly with a JSON object containing:
                                         sender = sender,
                                         text = messageText,
                                         isThreat = true,
-                                        verdict = "🚨 AI Scam Detected ($score/100)"
+                                        verdict = "AI Scam Detected ($score/100)"
                                     )
                                 )
                                 dispatchSecurityAlert(
@@ -178,7 +178,7 @@ Respond strictly with a JSON object containing:
                         sender = sender,
                         text = messageText,
                         isThreat = false,
-                        verdict = "✅ Verified Clean"
+                        verdict = "Verified Clean"
                     )
                 )
             }
@@ -191,7 +191,7 @@ Respond strictly with a JSON object containing:
                     sender = sender,
                     text = messageText,
                     isThreat = false,
-                    verdict = "✅ Safe Message"
+                    verdict = "Safe Message"
                 )
             )
         }
@@ -229,9 +229,9 @@ Respond strictly with a JSON object containing:
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_alert)
-            .setContentTitle("🚨 PHISHGUARD ALERT: Scam Intercepted!")
+            .setContentTitle("PHISHGUARD ALERT: Scam Intercepted")
             .setContentText("From: $sender (Threat Score: $riskScore/100)")
-            .setStyle(NotificationCompat.BigTextStyle().bigText("⚠️ Dangerous link intercepted from $sender!\n\n$summary\n\n👉 ACTION: Do NOT click any links. Delete this message immediately."))
+            .setStyle(NotificationCompat.BigTextStyle().bigText("Security Alert: Dangerous link intercepted from $sender.\n\n$summary\n\nRecommendation: Do NOT click any links. Delete this message immediately."))
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setAutoCancel(true)
@@ -243,6 +243,6 @@ Respond strictly with a JSON object containing:
             .build()
 
         notificationManager.notify(System.currentTimeMillis().toInt(), notification)
-        Log.e(TAG, "🚨 Security Alert notification DISPATCHED for $sender!")
+        Log.e(TAG, "Security Alert notification DISPATCHED for $sender!")
     }
 }

@@ -176,12 +176,12 @@ Respond strictly with a JSON object:
                     verdict = "HIGH_RISK"
                     score = 95
                     reasons = "• Urgent threat language demanding fast action\n• Suspicious unverified domain extension detected"
-                    advice = "👉 ACTION: Do NOT click any links. Delete this message immediately."
+                    advice = "RECOMMENDED: Do NOT click any links. Delete this message immediately."
                 } else if (isUrgent || hasBadDomain) {
                     verdict = "SUSPICIOUS"
                     score = 65
                     reasons = "• Contains urgency triggers or unverified links\n• Proceed with caution"
-                    advice = "👉 ACTION: Verify with the sender directly before clicking."
+                    advice = "RECOMMENDED: Verify with the sender directly before clicking."
                 }
             }
 
@@ -210,21 +210,21 @@ Respond strictly with a JSON object:
 
         when (verdict) {
             "HIGH_RISK" -> {
-                binding.tvResultVerdict.text = "🚨 HIGH RISK / SCAM"
+                binding.tvResultVerdict.text = "HIGH RISK / SCAM DETECTED"
                 binding.tvResultVerdict.setTextColor(ContextCompat.getColor(requireContext(), R.color.threat_danger))
                 binding.tvResultScore.setTextColor(ContextCompat.getColor(requireContext(), R.color.threat_danger))
                 binding.tvResultAdvice.setBackgroundResource(R.drawable.card_danger_border)
                 binding.tvResultAdvice.setTextColor(ContextCompat.getColor(requireContext(), R.color.threat_danger))
             }
             "SUSPICIOUS" -> {
-                binding.tvResultVerdict.text = "⚠️ SUSPICIOUS"
+                binding.tvResultVerdict.text = "SUSPICIOUS ACTIVITY"
                 binding.tvResultVerdict.setTextColor(ContextCompat.getColor(requireContext(), R.color.threat_warning))
                 binding.tvResultScore.setTextColor(ContextCompat.getColor(requireContext(), R.color.threat_warning))
                 binding.tvResultAdvice.setBackgroundResource(R.drawable.card_cyan_border)
                 binding.tvResultAdvice.setTextColor(ContextCompat.getColor(requireContext(), R.color.threat_warning))
             }
             else -> {
-                binding.tvResultVerdict.text = "✅ SAFE / VERIFIED"
+                binding.tvResultVerdict.text = "VERIFIED SAFE"
                 binding.tvResultVerdict.setTextColor(ContextCompat.getColor(requireContext(), R.color.threat_safe))
                 binding.tvResultScore.setTextColor(ContextCompat.getColor(requireContext(), R.color.threat_safe))
                 binding.tvResultAdvice.setBackgroundResource(R.drawable.card_safe_border)
