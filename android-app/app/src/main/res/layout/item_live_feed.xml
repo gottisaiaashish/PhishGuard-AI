@@ -30,11 +30,11 @@
                 android:id="@+id/tvFeedAppBadge"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/card_safe_border"
+                android:background="@drawable/card_cyan_border"
                 android:paddingHorizontal="8dp"
                 android:paddingVertical="3dp"
-                android:text="WHATSAPP"
-                android:textColor="#25D366"
+                android:text="NOTIFICATION"
+                android:textColor="@color/accent_cyan"
                 android:textSize="10sp"
                 android:textStyle="bold" />
 

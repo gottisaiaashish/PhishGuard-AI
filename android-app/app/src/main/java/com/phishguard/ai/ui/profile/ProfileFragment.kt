@@ -74,7 +74,7 @@ class ProfileFragment : Fragment() {
         binding.rowUpiProtection.setOnClickListener {
             AlertDialog.Builder(requireContext())
                 .setTitle("UPI & Banking Lure Shield")
-                .setMessage("PhishGuard AI actively monitors and intercepts zero-day SMS and WhatsApp lures targeting Indian payment systems including SBI Yono, HDFC, ICICI, Electricity bill cutoffs, PAN/Aadhaar KYC, and deceptive APK download links.")
+                .setMessage("PhishGuard AI actively monitors and intercepts zero-day notification lures across all installed messaging and banking apps targeting Indian payment systems including SBI Yono, HDFC, ICICI, Electricity bill cutoffs, PAN/Aadhaar KYC, and deceptive APK download links.")
                 .setPositiveButton("Got It", null)
                 .show()
         }

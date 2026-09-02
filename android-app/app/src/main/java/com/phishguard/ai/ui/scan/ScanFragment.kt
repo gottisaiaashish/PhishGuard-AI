@@ -75,7 +75,7 @@ class ScanFragment : Fragment() {
             binding.tabScanLink.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary))
 
             binding.tvInputLabel.text = "Paste Message Content:"
-            binding.etScanInput.hint = "Paste suspicious SMS, WhatsApp message, or email here..."
+            binding.etScanInput.hint = "Paste suspicious message, notification, or email text here..."
         } else {
             binding.tabScanLink.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.accent_cyan))
             binding.tabScanLink.setTextColor(ContextCompat.getColor(requireContext(), R.color.bg_dark))

@@ -288,7 +288,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
                         android:layout_weight="1"
-                        android:text="Run AI Security Scan on Links or SMS"
+                        android:text="Run AI Security Scan on Links or Messages"
                         android:textColor="@color/text_primary"
                         android:textSize="12sp"
                         android:textStyle="bold" />
@@ -375,7 +375,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="WhatsApp &amp; SMS message interception"
+                            android:text="Universal notification threat defense"
                             android:textColor="@color/text_secondary"
                             android:textSize="11sp" />
                     </LinearLayout>
@@ -421,7 +421,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
-                        android:text="Listening for Inbound Messages"
+                        android:text="Listening for Inbound Notifications"
                         android:textColor="@color/text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold" />
@@ -433,7 +433,7 @@
                         android:layout_marginTop="6dp"
                         android:gravity="center"
                         android:lineSpacingExtra="3dp"
-                        android:text="Incoming WhatsApp messages and SMS notifications will be instantly analyzed by Gemini AI in real-time."
+                        android:text="Incoming notifications across all messaging, social, and banking apps are analyzed by AI in real-time."
                         android:textColor="@color/text_secondary"
                         android:textSize="12sp" />
 
@@ -451,8 +451,8 @@
                             android:background="@drawable/card_safe_border"
                             android:paddingHorizontal="10dp"
                             android:paddingVertical="4dp"
-                            android:text="WhatsApp Shield: Active"
-                            android:textColor="#25D366"
+                            android:text="All-App Guard: Active"
+                            android:textColor="@color/threat_safe"
                             android:textSize="10sp"
                             android:textStyle="bold" />
 
@@ -463,7 +463,7 @@
                             android:background="@drawable/card_cyan_border"
                             android:paddingHorizontal="10dp"
                             android:paddingVertical="4dp"
-                            android:text="SMS Guard: Active"
+                            android:text="Zero-Day Shield: Active"
                             android:textColor="@color/accent_cyan"
                             android:textSize="10sp"
                             android:textStyle="bold" />

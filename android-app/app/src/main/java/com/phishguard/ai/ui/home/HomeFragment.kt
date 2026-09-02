@@ -111,21 +111,25 @@ class HomeFragment : Fragment() {
             val layoutAdvice = itemView.findViewById<View>(R.id.layoutFeedThreatAdvice)
             val tvAdvice = itemView.findViewById<TextView>(R.id.tvFeedThreatAdvice)
 
-            // App badge branding
-            val appLower = log.app.lowercase()
-            if (appLower.contains("whatsapp")) {
-                tvAppBadge.text = "WHATSAPP"
-                tvAppBadge.setTextColor(Color.parseColor("#25D366"))
-                tvAppBadge.setBackgroundResource(R.drawable.card_safe_border)
-            } else if (appLower.contains("sms") || appLower.contains("mms") || appLower.contains("messaging")) {
-                tvAppBadge.text = "SMS GUARD"
-                tvAppBadge.setTextColor(cyanColor)
-                tvAppBadge.setBackgroundResource(R.drawable.card_cyan_border)
-            } else {
-                tvAppBadge.text = "INBOUND"
-                tvAppBadge.setTextColor(mutedColor)
-                tvAppBadge.setBackgroundResource(R.drawable.card_cyan_border)
+            // Dynamic app badge resolution across all notifications
+            val appDisplayName = try {
+                val pm = requireContext().packageManager
+                val appInfo = pm.getApplicationInfo(log.app, 0)
+                pm.getApplicationLabel(appInfo).toString().uppercase()
+            } catch (e: Exception) {
+                val appLower = log.app.lowercase()
+                when {
+                    appLower.contains("whatsapp") -> "WHATSAPP"
+                    appLower.contains("telegram") -> "TELEGRAM"
+                    appLower.contains("sms") || appLower.contains("mms") || appLower.contains("messaging") -> "SMS"
+                    appLower.contains("gmail") || appLower.contains("mail") -> "EMAIL"
+                    appLower.contains("instagram") -> "INSTAGRAM"
+                    else -> "APP NOTIFICATION"
+                }
             }
+            tvAppBadge.text = appDisplayName
+            tvAppBadge.setTextColor(cyanColor)
+            tvAppBadge.setBackgroundResource(R.drawable.card_cyan_border)
 
             tvSender.text = log.sender.ifBlank { "Unknown Sender" }
             tvTime.text = log.time
