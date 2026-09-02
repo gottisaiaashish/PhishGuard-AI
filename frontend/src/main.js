@@ -291,6 +291,7 @@ function clearScreenshot() {
 
 // Preset Quick-Tests
 function initPresetListeners() {
+  if (!elements.presetsContainer) return;
   elements.presetsContainer.addEventListener('click', (e) => {
     const chip = e.target.closest('.preset-chip');
     if (!chip) return;
