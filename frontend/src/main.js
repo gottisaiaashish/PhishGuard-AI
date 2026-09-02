@@ -1,5 +1,6 @@
 import { PRESETS, INITIAL_HISTORY, SAMPLE_SCREENSHOT_SVG } from './data/mockData.js';
 import { analyzeThreatContent } from './services/analyzer.js';
+import { mountFuzzyText } from './components/FuzzyText.js';
 
 // Application State
 const state = {
@@ -89,6 +90,7 @@ const elements = {
 
 // Initialization
 document.addEventListener('DOMContentLoaded', () => {
+  initFuzzyHero();
   initHistory();
   initTabs();
   initPresetListeners();
@@ -98,6 +100,33 @@ document.addEventListener('DOMContentLoaded', () => {
   initModal();
   updateMetricsRibbon();
 });
+
+// Mount Holographic FuzzyText from React Bits
+function initFuzzyHero() {
+  const fuzzyContainer = document.getElementById('heroFuzzyContainer');
+  if (!fuzzyContainer) return;
+
+  mountFuzzyText(fuzzyContainer, {
+    text: 'PHISHGUARD AI',
+    fontSize: 'clamp(2.4rem, 6vw, 4.2rem)',
+    fontWeight: 900,
+    fontFamily: "'Inter', system-ui, sans-serif",
+    color: '#00f0ff',
+    enableHover: true,
+    baseIntensity: 0.16,
+    hoverIntensity: 0.58,
+    fuzzRange: 26,
+    fps: 60,
+    direction: 'horizontal',
+    transitionDuration: 8,
+    clickEffect: true,
+    glitchMode: true,
+    glitchInterval: 2600,
+    glitchDuration: 180,
+    gradient: ['#00f0ff', '#6366f1', '#a855f7'],
+    letterSpacing: 4
+  });
+}
 
 // Load History from localStorage or initial mock seeds
 function initHistory() {

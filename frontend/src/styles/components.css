@@ -155,6 +155,27 @@
   margin-bottom: 2rem;
 }
 
+.hero-fuzzy-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto 0.75rem;
+  overflow: visible;
+  cursor: pointer;
+}
+
+.fuzzy-text-canvas {
+  max-width: 100%;
+  height: auto;
+  filter: drop-shadow(0 0 18px rgba(0, 240, 255, 0.45));
+  transition: filter 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: block;
+}
+
+.fuzzy-text-canvas:hover {
+  filter: drop-shadow(0 0 28px rgba(0, 240, 255, 0.75)) drop-shadow(0 0 12px rgba(168, 85, 247, 0.5));
+}
+
 .hero-title {
   font-size: 2.1rem;
   font-weight: 800;
