@@ -486,27 +486,27 @@ export async function askGeminiFollowUp({ question, context = {} }) {
         ? context.threats.map(t => typeof t === 'string' ? t : `${t.name}: ${t.detail || ''}`).join(', ')
         : 'Urgent social engineering, unverified domain';
 
-      const prompt = `You are PhishGuard AI Copilot, a friendly, highly intelligent cybersecurity mentor and security advisor (like ChatGPT).
+      const prompt = `You are PhishGuard AI, a friendly and helpful cyber bodyguard protecting regular everyday people (students, parents, elderly users) from online scams.
 
-CURRENT ANALYSIS CONTEXT:
-- Message Text: "${context.snippet || context.text || 'Suspicious communication'}"
-- Sender / Target: "${context.target || context.sender || 'Unknown'}"
-- Threat Score: ${context.score || 85}/100 (${context.status || 'High Risk Phishing'})
-- Extracted URLs & Domains:
-${urlListStr}
-- Detected Threat Vectors: ${threatListStr}
-- Initial AI Assessment: "${context.aiExplanation || ''}"
+CURRENT MESSAGE SCENARIO:
+- Message: "${context.snippet || context.text || 'Suspicious communication'}"
+- Flagged Link: "${context.urls?.[0]?.url || 'Link in message'}"
+- Risk Level: ${context.score || 85}/100
 
-USER'S QUESTION:
+USER ASKED:
 "${question}"
 
-CRITICAL INSTRUCTIONS:
-1. Speak in an approachable, conversational, human-friendly tone (like a knowledgeable cybersecurity friend explaining to a colleague).
-2. DIRECTLY answer what the user asked. NEVER reply with generic disclaimers or canned robotic phrases.
-3. If the user asks why the link or message is suspicious or fake, explain the EXACT indicators found in the context (e.g. typosquatting domain, urgency coercion, redirect hiding, credential harvesting tricks).
-4. If the user asks what to do if they already clicked or typed passwords, provide urgent, step-by-step incident response advice.
-5. Format your response cleanly with clear numbered steps (1., 2., 3.) or bullet points, and use **bold text** for key action words so it is effortless to scan.
-6. Keep the response concise, punchy, and under 160 words.`;
+STRICT RULES - USER-FRIENDLY TALK:
+1. ZERO TECHNICAL JARGON! The user is an everyday person who may not know computers. NEVER use words like "Typosquatting", "TLD", "Protocol", "Credential Harvesting", "Payload", or "Vectors".
+2. TALK LIKE A REAL FRIEND: Use simple, plain, conversational words. Explain clearly in under 70 words.
+3. If they ask why the link or message is fake/suspicious:
+   - Point out the spelling trick (e.g. they put a number 0 instead of an o to trick their eyes).
+   - Point out the weird website ending (real companies use .com, not weird fake endings like .xyz).
+   - Explain the trap (they want to steal your password, bank OTP, or money).
+4. If they ask what to do if they already clicked:
+   - Give 3 simple steps: close the tab now, change password from another device, call bank to lock card.
+5. Format with 2-3 short, clean bullet points.
+6. End with: "👉 What to do: Don't click it, just delete the message!"`;
 
       for (const m of GEMINI_MODELS) {
         try {
@@ -515,7 +515,7 @@ CRITICAL INSTRUCTIONS:
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               contents: [{ parts: [{ text: prompt }] }],
-              generationConfig: { temperature: 0.4, maxOutputTokens: 500 }
+              generationConfig: { temperature: 0.3, maxOutputTokens: 300 }
             })
           });
 
@@ -554,42 +554,43 @@ CRITICAL INSTRUCTIONS:
     }
   }
 
-  // 3. Smart, Context-Aware Fallbacks tailored directly to what the user asked
+  // 3. Simple, plain English Fallbacks with ZERO jargon
   const q = question.toLowerCase();
-  const mainDomain = context.urls?.[0]?.domain || (context.urlsFound?.[0] ? new URL(context.urlsFound[0]).hostname : 'the link');
+  const mainDomain = context.urls?.[0]?.domain || (context.urlsFound?.[0] ? new URL(context.urlsFound[0]).hostname : 'this link');
 
   if (q.includes('link') || q.includes('suspicious') || q.includes('spiceous') || q.includes('why') || q.includes('fake') || q.includes('domain') || q.includes('url')) {
-    return `### 🔍 Why This Link is Flagged as Suspicious:
+    return `Hey! This link is definitely a fake scam trap. Here is why:
 
-1. **Deceptive Lookalike Domain**: The URL uses \`${mainDomain}\`, which mimics trusted services to trick users into lowering their guard.
-2. **Artificial Urgency**: The message pressures you to act immediately, a classic psychological tactic to prevent you from double-checking the domain.
-3. **High Credential Harvesting Risk**: Pages linked in these messages typically load fake sign-in forms to harvest your passwords or OTPs.
+* **Fake spelling trick:** The name (\`${mainDomain}\`) has sneaky letters or numbers changed to fool your eyes.
+* **Weird website address:** Big trusted companies use official websites ending in \`.com\`, not strange fake endings.
+* **Password & Money Trap:** If you open it, a fake login screen will pop up asking for your password or OTP to steal your money.
 
-💡 **Safe Next Step**: Never click the link or log in through it. If you need to access your account, navigate to the official website directly from your browser.`;
+👉 **What to do:** Do NOT click this link! Just delete the message.`;
   }
 
   if (q.includes('clicked') || q.includes('opened') || q.includes('already') || q.includes('entered') || q.includes('password')) {
-    return `### 🚨 Immediate Incident Response Steps:
+    return `Don't panic! Do these 4 simple steps right now:
 
-1. **Close the Page Immediately**: Exit the browser tab right away to stop any active scripts or data submission.
-2. **Do NOT Enter Credentials**: If a form loaded, never submit your password, OTP, or card details.
-3. **Change Your Password Now**: If you already typed your password, reset it immediately from a known safe device and log out of all sessions.
-4. **Alert Your Bank or IT Support**: If financial or work details were entered, place a temporary freeze on your card or notify your IT security team.`;
+1. **Close the website tab right away.**
+2. **Do NOT type any password, OTP, or PIN code.**
+3. **Change your password immediately** from another safe phone or computer.
+4. **Call your bank right now** to put a temporary stop on your card if you typed any card numbers.`;
   }
 
   if (q.includes('report') || q.includes('it team') || q.includes('manager')) {
-    return `### 📋 Phishing Incident Report Draft:
+    return `Here is a quick report you can send to your office or security team:
 
-- **Threat Category**: Suspected Social Engineering & Credential Harvesting
-- **Origin / Sender**: ${context.target || context.sender || 'Unknown'}
-- **Target URL**: ${mainDomain}
-- **Assessed Risk Level**: ${context.score || 85}/100 (${context.status || 'High Risk'})
-- **Recommended Action**: Quarantine message, block sender domain, and verify mail gateway firewall filters.`;
+* **Incident:** Fake scam link received
+* **Sender:** ${context.target || context.sender || 'Unknown'}
+* **Suspicious Link:** \`${mainDomain}\`
+* **Risk Score:** ${context.score || 85}/100 (Dangerous)
+* **Action Taken:** Message blocked and deleted with PhishGuard AI.`;
   }
 
-  return `### 🛡️ PhishGuard Security Advisor:
+  return `Hey there! This message looks like a dangerous fake trap:
 
-1. **High-Risk Indicators**: The analyzed message exhibits patterns characteristic of brand impersonation and urgency coercion.
-2. **Golden Rule**: Legitimate organizations (banks, streaming services, tech companies) will never ask you to verify sensitive credentials through unverified links or urgent SMS.
-3. **Action Required**: Delete this message immediately and mark the sender as spam.`;
+* **Rushing you:** Scammers make you panic so you act fast without checking.
+* **Fake links:** Real companies never ask for your passwords or bank cards through random messages.
+
+👉 **What to do:** Delete the message and block the sender right away!`;
 }
