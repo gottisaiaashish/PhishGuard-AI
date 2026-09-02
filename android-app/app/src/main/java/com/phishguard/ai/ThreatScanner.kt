@@ -31,10 +31,10 @@ object ThreatScanner {
         .readTimeout(5, TimeUnit.SECONDS)
         .build()
 
-    // Fast zero-day heuristic patterns for instant on-device detection (<50ms)
-    private val URGENCY_PATTERN = Pattern.compile("(?i)(urgent|immediate|suspend|action required|freeze|unauthorized|blocked|kyc|card expired)")
-    private val SUSPICIOUS_DOMAINS = Pattern.compile("(?i)(micros0ft|paypa[il]|g00gle|netf[il]ix|azurepub\\.cc|\\.xyz|\\.top|\\.cc|\\.tk|\\.su|bit\\.ly)")
-    private val URL_PATTERN = Pattern.compile("https?://[^\\s\"'<>]+")
+    // Fast zero-day heuristic patterns for instant on-device detection (<30ms)
+    private val URGENCY_PATTERN = Pattern.compile("(?i)(urgent|immediate|suspend|action required|freeze|unauthorized|blocked|kyc|pan card|aadhaar|debit card|credit card|lottery|kbc|winner|won|cashback|electricity|power cut|disconnect|part-time|salary|deposit|bonus|verify now|click here|apk)")
+    private val SUSPICIOUS_DOMAINS = Pattern.compile("(?i)(micros0ft|paypa[il]|g00gle|netf[il]ix|azurepub\\.cc|\\.xyz|\\.top|\\.cc|\\.tk|\\.su|\\.online|\\.site|\\.club|\\.vip|\\.buzz|\\.link|\\.live|\\.work|\\.click|bit\\.ly|tinyurl|t\\.co|is\\.gd|rb\\.gy|cutt\\.ly)")
+    private val URL_PATTERN = Pattern.compile("(?i)(https?://[^\\s\"'<>]+|www\\.[^\\s\"'<>]+|[a-zA-Z0-9-]+\\.(xyz|top|cc|tk|su|online|site|club|vip|buzz|link|live|work|click|info)[^\\s\"'<>]*)")
 
     fun scanNotification(context: Context, sender: String, messageText: String, packageName: String) {
         if (messageText.isBlank()) return
@@ -44,7 +44,7 @@ object ThreatScanner {
         val hasUrgency = URGENCY_PATTERN.matcher(messageText).find()
         val hasSuspiciousDomain = SUSPICIOUS_DOMAINS.matcher(messageText).find()
 
-        val isHighRisk = (hasUrl && hasUrgency) || hasSuspiciousDomain
+        val isHighRisk = (hasUrl && hasUrgency) || hasSuspiciousDomain || (hasUrl && messageText.contains("http://", ignoreCase = true))
 
         if (isHighRisk) {
             val appLabel = when {
@@ -57,7 +57,7 @@ object ThreatScanner {
             dispatchSecurityAlert(
                 context = context,
                 sender = sender.ifBlank { appLabel },
-                summary = "Fake scam link intercepted! Scammers are trying to steal your account or money.",
+                summary = "Dangerous scam message intercepted! Do NOT click any links or share OTPs.",
                 riskScore = 95
             )
             return
