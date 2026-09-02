@@ -54,9 +54,18 @@ class HomeFragment : Fragment() {
 
     private fun loadStats() {
         val stats = scanRepository.getUserStats()
-        binding.tvStatScans.text = stats.totalScans.toString()
-        binding.tvStatThreats.text = stats.threatsBlocked.toString()
-        binding.tvStatMonitored.text = stats.messagesMonitored.toString()
+        val liveFeedLogs = LiveNotificationTracker.logs
+        val liveCount = liveFeedLogs.size
+        val liveThreats = liveFeedLogs.count { it.isThreat }
+
+        // Total scans includes manual scans + live intercepted notifications
+        val totalScans = stats.totalScans + liveCount
+        val totalThreats = (stats.threatsBlocked + liveThreats).coerceAtLeast(0)
+        val totalMonitored = stats.messagesMonitored + liveCount
+
+        binding.tvStatScans.text = totalScans.toString()
+        binding.tvStatThreats.text = totalThreats.toString()
+        binding.tvStatMonitored.text = totalMonitored.toString()
     }
 
     private fun setupActions() {
@@ -66,6 +75,7 @@ class HomeFragment : Fragment() {
 
         binding.tvClearHomeFeed.setOnClickListener {
             LiveNotificationTracker.clearLogs()
+            loadStats()
             renderLiveFeed()
         }
     }
