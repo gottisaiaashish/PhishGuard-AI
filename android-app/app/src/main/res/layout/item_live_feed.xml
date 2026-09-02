@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cardFeedItem"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="10dp"
+    android:clickable="true"
+    android:focusable="true"
+    app:cardBackgroundColor="#0C1322"
+    app:cardCornerRadius="14dp"
+    app:strokeColor="#1E293B"
+    app:strokeWidth="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="14dp">
+
+        <!-- Top Header: App Pill, Sender & Time -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <!-- App Badge (e.g. WHATSAPP, SMS) -->
+            <TextView
+                android:id="@+id/tvFeedAppBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/card_safe_border"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="3dp"
+                android:text="WHATSAPP"
+                android:textColor="#25D366"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+
+            <!-- Sender Info -->
+            <TextView
+                android:id="@+id/tvFeedSender"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="+91 98765 43210"
+                android:textColor="@color/text_primary"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <!-- Time -->
+            <TextView
+                android:id="@+id/tvFeedTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="2:34 PM"
+                android:textColor="@color/text_secondary"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <!-- Verdict & Risk Status Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tvFeedVerdictBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/card_danger_border"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="3dp"
+                android:text="BLOCKED • THREAT"
+                android:textColor="@color/threat_danger"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvFeedVerdictDetail"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="Phishing link blocked by AI"
+                android:textColor="@color/text_secondary"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <!-- Intercepted Message Bubble -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_input_box"
+            android:padding="10dp">
+
+            <TextView
+                android:id="@+id/tvFeedMessageSnippet"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:lineSpacingExtra="2dp"
+                android:maxLines="3"
+                android:text="Your SBI account will be blocked today! Update your PAN immediately at https://sbi-kyc-update.xyz"
+                android:textColor="#CBD5E1"
+                android:textSize="12sp" />
+        </FrameLayout>
+
+        <!-- Threat Advice Warning Box (Visible only for threats) -->
+        <LinearLayout
+            android:id="@+id/layoutFeedThreatAdvice"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="#1F151B"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="8dp"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:src="@drawable/ic_shield_check"
+                app:tint="@color/threat_danger" />
+
+            <TextView
+                android:id="@+id/tvFeedThreatAdvice"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:text="Do NOT click any link in this message. Delete immediately."
+                android:textColor="@color/threat_danger"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

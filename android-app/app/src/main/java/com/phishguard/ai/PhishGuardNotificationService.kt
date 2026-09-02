@@ -28,6 +28,11 @@ object LiveNotificationTracker {
         if (logs.size > 20) logs.removeAt(logs.lastIndex)
         onNewLog?.invoke(log)
     }
+
+    @Synchronized
+    fun clearLogs() {
+        logs.clear()
+    }
 }
 
 class PhishGuardNotificationService : NotificationListenerService() {

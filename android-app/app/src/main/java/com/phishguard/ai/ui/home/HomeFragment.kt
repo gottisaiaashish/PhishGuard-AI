@@ -1,13 +1,14 @@
 package com.phishguard.ai.ui.home
 
 import android.graphics.Color
-import android.graphics.Typeface
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.LinearLayout
+import android.widget.FrameLayout
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.google.android.material.card.MaterialCardView
 import com.phishguard.ai.LiveNotificationTracker
@@ -36,7 +37,7 @@ class HomeFragment : Fragment() {
 
         setupUserGreeting()
         loadStats()
-        setupQuickActions()
+        setupActions()
         setupLiveFeed()
     }
 
@@ -58,18 +59,14 @@ class HomeFragment : Fragment() {
         binding.tvStatMonitored.text = stats.messagesMonitored.toString()
     }
 
-    private fun setupQuickActions() {
+    private fun setupActions() {
         binding.btnCardRunScan.setOnClickListener {
             (activity as? MainActivity)?.navigateToTab(R.id.nav_scan, 0)
         }
-        binding.btnQuickScanMessage.setOnClickListener {
-            (activity as? MainActivity)?.navigateToTab(R.id.nav_scan, 0)
-        }
-        binding.btnQuickScanLink.setOnClickListener {
-            (activity as? MainActivity)?.navigateToTab(R.id.nav_scan, 1)
-        }
-        binding.btnQuickAssistant.setOnClickListener {
-            (activity as? MainActivity)?.navigateToTab(R.id.nav_assistant)
+
+        binding.tvClearHomeFeed.setOnClickListener {
+            LiveNotificationTracker.clearLogs()
+            renderLiveFeed()
         }
     }
 
@@ -86,67 +83,84 @@ class HomeFragment : Fragment() {
     private fun renderLiveFeed() {
         val logs = LiveNotificationTracker.logs
         if (logs.isEmpty()) {
-            binding.tvHomeFeedEmpty.visibility = View.VISIBLE
+            binding.layoutHomeFeedEmpty.visibility = View.VISIBLE
+            binding.tvClearHomeFeed.visibility = View.GONE
             binding.containerHomeFeed.removeAllViews()
             return
         }
 
-        binding.tvHomeFeedEmpty.visibility = View.GONE
+        binding.layoutHomeFeedEmpty.visibility = View.GONE
+        binding.tvClearHomeFeed.visibility = View.VISIBLE
         binding.containerHomeFeed.removeAllViews()
 
-        for (log in logs.take(5)) {
-            val card = MaterialCardView(requireContext()).apply {
-                radius = 10f * resources.displayMetrics.density
-                strokeWidth = (1f * resources.displayMetrics.density).toInt()
-                setCardBackgroundColor(Color.parseColor("#0F172A"))
-                strokeColor = if (log.isThreat) Color.parseColor("#FF3366") else Color.parseColor("#1E293B")
-                setContentPadding(16, 12, 16, 12)
-                layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                ).apply {
-                    setMargins(0, 0, 0, (6 * resources.displayMetrics.density).toInt())
-                }
+        val dangerColor = ContextCompat.getColor(requireContext(), R.color.threat_danger)
+        val safeColor = ContextCompat.getColor(requireContext(), R.color.threat_safe)
+        val cyanColor = ContextCompat.getColor(requireContext(), R.color.accent_cyan)
+        val mutedColor = ContextCompat.getColor(requireContext(), R.color.text_secondary)
+
+        for (log in logs.take(10)) {
+            val itemView = LayoutInflater.from(requireContext()).inflate(R.layout.item_live_feed, binding.containerHomeFeed, false)
+
+            val card = itemView.findViewById<MaterialCardView>(R.id.cardFeedItem)
+            val tvAppBadge = itemView.findViewById<TextView>(R.id.tvFeedAppBadge)
+            val tvSender = itemView.findViewById<TextView>(R.id.tvFeedSender)
+            val tvTime = itemView.findViewById<TextView>(R.id.tvFeedTime)
+            val tvVerdictBadge = itemView.findViewById<TextView>(R.id.tvFeedVerdictBadge)
+            val tvVerdictDetail = itemView.findViewById<TextView>(R.id.tvFeedVerdictDetail)
+            val tvSnippet = itemView.findViewById<TextView>(R.id.tvFeedMessageSnippet)
+            val layoutAdvice = itemView.findViewById<View>(R.id.layoutFeedThreatAdvice)
+            val tvAdvice = itemView.findViewById<TextView>(R.id.tvFeedThreatAdvice)
+
+            // App badge branding
+            val appLower = log.app.lowercase()
+            if (appLower.contains("whatsapp")) {
+                tvAppBadge.text = "WHATSAPP"
+                tvAppBadge.setTextColor(Color.parseColor("#25D366"))
+                tvAppBadge.setBackgroundResource(R.drawable.card_safe_border)
+            } else if (appLower.contains("sms") || appLower.contains("mms") || appLower.contains("messaging")) {
+                tvAppBadge.text = "SMS GUARD"
+                tvAppBadge.setTextColor(cyanColor)
+                tvAppBadge.setBackgroundResource(R.drawable.card_cyan_border)
+            } else {
+                tvAppBadge.text = "INBOUND"
+                tvAppBadge.setTextColor(mutedColor)
+                tvAppBadge.setBackgroundResource(R.drawable.card_cyan_border)
             }
 
-            val layout = LinearLayout(requireContext()).apply {
-                orientation = LinearLayout.VERTICAL
+            tvSender.text = log.sender.ifBlank { "Unknown Sender" }
+            tvTime.text = log.time
+            tvSnippet.text = log.text
+
+            if (log.isThreat) {
+                card.strokeColor = dangerColor
+                card.setCardBackgroundColor(Color.parseColor("#140D18"))
+                tvVerdictBadge.text = "BLOCKED • THREAT"
+                tvVerdictBadge.setTextColor(dangerColor)
+                tvVerdictBadge.setBackgroundResource(R.drawable.card_danger_border)
+                tvVerdictDetail.text = log.verdict.ifBlank { "Phishing Scam Intercepted" }
+                tvVerdictDetail.setTextColor(dangerColor)
+                layoutAdvice.visibility = View.VISIBLE
+                tvAdvice.text = "High-risk lure intercepted. Do not click links or reply."
+            } else {
+                card.strokeColor = Color.parseColor("#1E293B")
+                card.setCardBackgroundColor(Color.parseColor("#0C1322"))
+                tvVerdictBadge.text = "VERIFIED SAFE"
+                tvVerdictBadge.setTextColor(safeColor)
+                tvVerdictBadge.setBackgroundResource(R.drawable.card_safe_border)
+                tvVerdictDetail.text = "No malicious links or scam triggers detected"
+                tvVerdictDetail.setTextColor(mutedColor)
+                layoutAdvice.visibility = View.GONE
             }
 
-            val topRow = LinearLayout(requireContext()).apply {
-                orientation = LinearLayout.HORIZONTAL
+            card.setOnClickListener {
+                AlertDialog.Builder(requireContext())
+                    .setTitle(if (log.isThreat) "Security Alert Audit" else "Message Inspection Audit")
+                    .setMessage("Sender: ${log.sender}\nChannel: ${tvAppBadge.text}\nTime: ${log.time}\nStatus: ${if (log.isThreat) "THREAT BLOCKED" else "SAFE"}\nVerdict: ${log.verdict}\n\nIntercepted Message:\n${log.text}")
+                    .setPositiveButton("Dismiss", null)
+                    .show()
             }
 
-            val senderView = TextView(requireContext()).apply {
-                text = "${log.time} • ${log.sender}"
-                setTextColor(Color.parseColor("#F8FAFC"))
-                textSize = 12f
-                typeface = Typeface.DEFAULT_BOLD
-                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-            }
-
-            val verdictBadge = TextView(requireContext()).apply {
-                text = if (log.isThreat) "🚨 THREAT" else "✅ CLEAN"
-                setTextColor(if (log.isThreat) Color.parseColor("#FF3366") else Color.parseColor("#00E676"))
-                textSize = 11f
-                typeface = Typeface.DEFAULT_BOLD
-            }
-
-            topRow.addView(senderView)
-            topRow.addView(verdictBadge)
-
-            val snippet = TextView(requireContext()).apply {
-                text = log.text.take(80) + if (log.text.length > 80) "..." else ""
-                setTextColor(Color.parseColor("#94A3B8"))
-                textSize = 12f
-                setPadding(0, 4, 0, 0)
-            }
-
-            layout.addView(topRow)
-            layout.addView(snippet)
-            card.addView(layout)
-
-            binding.containerHomeFeed.addView(card)
+            binding.containerHomeFeed.addView(itemView)
         }
     }
 
