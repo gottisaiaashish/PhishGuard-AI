@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PhishGuard AI - AI-Powered Threat & Phishing Detection Engine</title>
+  <meta name="description" content="Next-generation cybersecurity platform detecting phishing attacks from emails, SMS, and screenshots with explainable AI threat scoring.">
+
+  <!-- Google Fonts: Inter and JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="./src/styles/theme.css">
+  <link rel="stylesheet" href="./src/styles/components.css">
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- Top Cyber Header -->
+    <header class="header">
+      <div class="brand-group">
+        <div class="brand-logo-icon" aria-label="PhishGuard Shield">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-title">
+            PhishGuard <span style="font-weight:300; opacity:0.9;">AI</span>
+            <span class="brand-badge">CORE v2.4</span>
+          </div>
+          <div class="brand-subtitle">AI-Driven Threat Intelligence & Social Engineering Defense</div>
+        </div>
+      </div>
+
+      <div class="header-status">
+        <span class="status-pulse" id="statusPulse"></span>
+        <span id="systemStatusText">MATRIX OPERATIONAL // LOCAL HEURISTICS ONLINE</span>
+      </div>
+    </header>
+
+    <!-- Metrics Ribbon -->
+    <section class="metrics-ribbon" aria-label="Security Metrics Ribbon">
+      <div class="metric-card">
+        <div class="metric-icon-wrap cyan">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          </svg>
+        </div>
+        <div class="metric-info">
+          <span class="metric-value" id="metricTotalScans">1,429</span>
+          <span class="metric-label">Threats Ingested</span>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon-wrap red">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        </div>
+        <div class="metric-info">
+          <span class="metric-value" id="metricBlocked">842</span>
+          <span class="metric-label">Phishing Neutralized</span>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon-wrap amber">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </div>
+        <div class="metric-info">
+          <span class="metric-value" id="metricSuspicious">294</span>
+          <span class="metric-label">Suspicious Flagged</span>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon-wrap safe">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+        </div>
+        <div class="metric-info">
+          <span class="metric-value">&lt; 340ms</span>
+          <span class="metric-label">Inference Latency</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Hero / Pitch Section -->
+    <section class="hero-section">
+      <h1 class="hero-title">Zero-Day <span>Phishing Detection</span> & Threat Analysis</h1>
+      <p class="hero-desc">
+        Deep multi-modal inspection across emails, mobile SMS lures, and visual credential-harvesting screenshots with real-time heuristic scoring.
+      </p>
+
+      <!-- Quick Presets Ribbon -->
+      <div class="presets-container" id="presetsContainer">
+        <span class="presets-label">⚡ Hackathon Quick Tests:</span>
+        <button type="button" class="preset-chip high-risk" data-preset="m365-phish" id="presetM365">
+          <span>🚨 Microsoft 365 Phish</span>
+        </button>
+        <button type="button" class="preset-chip high-risk" data-preset="usps-smish" id="presetUSPS">
+          <span>📱 USPS Smishing SMS</span>
+        </button>
+        <button type="button" class="preset-chip high-risk" data-preset="paypal-spoof" id="presetPaypal">
+          <span>💳 PayPal Spoof Email</span>
+        </button>
+        <button type="button" class="preset-chip safe" data-preset="github-safe" id="presetGithub">
+          <span>🛡️ GitHub Safe Notice</span>
+        </button>
+        <button type="button" class="preset-chip high-risk" data-preset="screenshot-sample" id="presetScreenshot">
+          <span>🖼️ Fake Login Screenshot</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Main Ingestion Workbench -->
+    <main class="workbench-card" id="workbenchCard">
+      <!-- Input Mode Switcher Tabs -->
+      <nav class="tabs-nav" role="tablist">
+        <button class="tab-btn active" data-tab="email" id="tabEmail" role="tab" aria-selected="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect width="20" height="16" x="2" y="4" rx="2"></rect>
+            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+          </svg>
+          Email Inspector
+        </button>
+
+        <button class="tab-btn" data-tab="sms" id="tabSms" role="tab" aria-selected="false">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+          SMS / Smishing
+        </button>
+
+        <button class="tab-btn" data-tab="screenshot" id="tabScreenshot" role="tab" aria-selected="false">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
+            <circle cx="9" cy="9" r="2"></circle>
+            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path>
+          </svg>
+          Screenshot OCR
+        </button>
+      </nav>
+
+      <!-- Tab Content: Email -->
+      <div class="tab-content active" id="contentEmail" role="tabpanel">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label" for="emailSender">
+              <span>Sender Address / Header</span>
+              <span class="char-counter" id="emailSenderCounter">RFC 5322</span>
+            </label>
+            <input type="text" id="emailSender" class="text-input" placeholder="e.g. security-alert@micros0ft-verify.com or noreply@bank.com">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="emailSubject">
+              <span>Subject Line</span>
+              <span class="char-counter" id="emailSubjectCounter">MIME Header</span>
+            </label>
+            <input type="text" id="emailSubject" class="text-input" placeholder="e.g. URGENT: Account Suspension Notice">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="emailBody">
+            <span>Email Body / Raw Headers / HTML</span>
+            <span class="char-counter" id="emailBodyCounter">0 chars</span>
+          </label>
+          <textarea id="emailBody" class="textarea-input" placeholder="Paste the suspicious email text, raw MIME headers, or links here..."></textarea>
+        </div>
+      </div>
+
+      <!-- Tab Content: SMS / Message -->
+      <div class="tab-content" id="contentSms" role="tabpanel">
+        <div class="form-group">
+          <label class="form-label" for="smsSender">
+            <span>Sender Number / Caller ID</span>
+            <span class="char-counter">E.164 / Alphanumeric</span>
+          </label>
+          <input type="text" id="smsSender" class="text-input" placeholder="e.g. +1 (855) 902-1849 or 'POSTAL-ALERT'">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="smsBody">
+            <span>SMS Message Text</span>
+            <span class="char-counter" id="smsBodyCounter">0 chars</span>
+          </label>
+          <textarea id="smsBody" class="textarea-input" style="min-height: 120px;" placeholder="Paste the suspicious text message, bit.ly link, or smishing alert here..."></textarea>
+        </div>
+      </div>
+
+      <!-- Tab Content: Screenshot Upload -->
+      <div class="tab-content" id="contentScreenshot" role="tabpanel">
+        <div class="dropzone" id="dropzone">
+          <input type="file" id="screenshotFileInput" class="dropzone-file-input" accept="image/png, image/jpeg, image/webp">
+          <div class="dropzone-inner">
+            <div class="dropzone-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+            </div>
+            <div class="dropzone-title">Drag & drop suspicious screenshot here</div>
+            <div class="dropzone-sub">Supports PNG, JPG, WebP up to 10MB • Or click to browse files</div>
+          </div>
+        </div>
+
+        <!-- Preview Card for uploaded/sample screenshot -->
+        <div class="image-preview-card" id="imagePreviewCard">
+          <div class="image-preview-wrapper" id="imagePreviewWrapper">
+            <div class="scan-beam" id="scanBeam"></div>
+            <img id="imagePreview" alt="Threat Screenshot Preview" src="">
+          </div>
+          <div class="preview-bar">
+            <div class="preview-filename" id="previewFilename">screenshot.png</div>
+            <button type="button" class="btn-remove-img" id="btnRemoveImg">Remove File</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Workbench Actions -->
+      <div class="workbench-actions">
+        <div class="action-tip">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          <span>Ready for Gemini API, VirusTotal & Google Safe Browsing integration</span>
+        </div>
+
+        <div style="display: flex; gap: 0.75rem;">
+          <button type="button" class="btn-clear" id="btnClearInputs">Clear</button>
+          <button type="button" class="btn-analyze" id="btnAnalyze">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <span>Analyze with PhishGuard AI</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Scanning HUD / Telemetry Progress -->
+      <div class="scanning-hud" id="scanningHud">
+        <div class="hud-header">
+          <span class="hud-title">
+            <span class="status-pulse"></span>
+            HEURISTIC TELEMETRY PIPELINE ACTIVE
+          </span>
+          <span id="hudPercent" style="font-family: var(--font-mono); color: var(--accent-cyan);">0%</span>
+        </div>
+        <div class="hud-progress-bar-wrap">
+          <div class="hud-progress-bar" id="hudProgressBar"></div>
+        </div>
+        <div class="hud-telemetry-log" id="hudTelemetryLog"></div>
+      </div>
+    </main>
+
+    <!-- Deep Analysis Result Section -->
+    <section class="result-section" id="resultSection" aria-label="Analysis Results">
+      <div class="result-card">
+        
+        <!-- Result Header / Status Banner -->
+        <div class="result-banner status-phishing" id="resultBanner">
+          <div class="result-status-group">
+            <span class="status-badge phishing" id="resultStatusBadge">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+              </svg>
+              <span id="resultStatusText">Phishing Detected</span>
+            </span>
+            <span id="resultTargetName" style="font-weight: 600; font-size: 0.95rem; color: var(--text-primary);">
+              security-alert@micros0ft-verify.com
+            </span>
+          </div>
+          <div class="result-meta-time" id="resultMetaTime">SCAN ID: #84920 • 2026-09-02 14:15:32</div>
+        </div>
+
+        <!-- Result Body Grid -->
+        <div class="result-body">
+          
+          <!-- Left: Score Dial Gauge -->
+          <div class="score-gauge-box">
+            <div class="gauge-svg-wrap">
+              <svg class="gauge-svg" viewBox="0 0 160 160">
+                <circle class="gauge-track" cx="80" cy="80" r="65"></circle>
+                <circle class="gauge-progress" id="gaugeProgressCircle" cx="80" cy="80" r="65"></circle>
+              </svg>
+              <div class="gauge-center-text">
+                <span class="gauge-score-num" id="gaugeScoreValue">94</span>
+                <span class="gauge-score-sub">Risk Score / 100</span>
+              </div>
+            </div>
+            <div class="score-level-desc" id="gaugeScoreDesc">
+              High Risk Social Engineering Attack
+            </div>
+          </div>
+
+          <!-- Right: Detailed Breakdown -->
+          <div class="threat-details-col">
+            
+            <!-- Detected Threat Vectors -->
+            <div>
+              <div class="section-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+                  <line x1="12" y1="9" x2="12" y2="13"></line>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                Detected Threat Signatures
+              </div>
+              <div class="threat-tags-grid" id="threatTagsGrid">
+                <!-- Injected via JS -->
+              </div>
+            </div>
+
+            <!-- AI Explanation & Why Flagged -->
+            <div class="ai-explanation-card">
+              <div class="ai-explanation-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2v4"></path><path d="m4.93 4.93 2.83 2.83"></path><path d="M2 12h4"></path><path d="m4.93 19.07 2.83-2.83"></path><path d="M12 22v-4"></path><path d="m19.07 19.07-2.83-2.83"></path><path d="M22 12h-4"></path><path d="m19.07 4.93-2.83 2.83"></path>
+                </svg>
+                AI Threat Assessment & Breakdown
+              </div>
+              <p class="ai-explanation-text" id="aiExplanationText">
+                Analyzing linguistic structure and URL indicators...
+              </p>
+              <div class="ai-recommendation-box" id="aiRecommendationBox">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--threat-warning)" stroke-width="2" style="flex-shrink:0; margin-top:2px;">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span id="aiRecommendationText">Recommended actions will appear here.</span>
+              </div>
+            </div>
+
+            <!-- Suspicious URLs & Destination Analysis -->
+            <div>
+              <div class="section-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                </svg>
+                Extracted URLs & Domain Threat Inspection
+              </div>
+              <div class="urls-table-container">
+                <table class="urls-table">
+                  <thead>
+                    <tr>
+                      <th>Identified URL / Destination</th>
+                      <th>Resolved Domain</th>
+                      <th>Safety Verdict</th>
+                      <th>VirusTotal Detection</th>
+                      <th>Safe Browsing</th>
+                    </tr>
+                  </thead>
+                  <tbody id="urlsTableBody">
+                    <!-- Populated dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Result Footer Actions -->
+        <div class="result-footer">
+          <div style="font-size: 0.78rem; color: var(--text-muted); font-family: var(--font-mono);">
+            ENGINE: <span id="resultEngineVer">Heuristics v2.4 (Ready for Gemini Pro)</span>
+          </div>
+          <div class="result-footer-actions">
+            <button type="button" class="btn-secondary" id="btnCopyReport">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect>
+                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>
+              </svg>
+              Copy Report
+            </button>
+            <button type="button" class="btn-secondary" id="btnExportJson">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Export JSON
+            </button>
+            <button type="button" class="btn-secondary" id="btnNewScan">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="1 4 1 10 7 10"></polyline>
+                <polyline points="23 20 23 14 17 14"></polyline>
+                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+              </svg>
+              New Scan
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Scan History Section -->
+    <section class="history-section" aria-label="Scan History">
+      <div class="history-header">
+        <div class="history-title-group">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <h2 class="history-title">Recent Threat Scan History</h2>
+        </div>
+
+        <div class="history-controls">
+          <input type="text" id="historySearch" class="history-search-input" placeholder="Filter by domain or sender...">
+          <button type="button" class="btn-secondary" id="btnClearHistory" style="padding: 0.4rem 0.75rem; font-size: 0.75rem;">
+            Clear Log
+          </button>
+        </div>
+      </div>
+
+      <div class="history-table-card">
+        <div style="overflow-x: auto;">
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>Scan ID & Time</th>
+                <th>Channel</th>
+                <th>Target / Origin</th>
+                <th>Content Snippet</th>
+                <th>Risk Score</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="historyTableBody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Inspection Detail Modal -->
+    <div class="modal-overlay" id="historyModal">
+      <div class="modal-box">
+        <button type="button" class="modal-close-btn" id="modalCloseBtn">&times;</button>
+        <h3 id="modalTitle" style="margin-bottom: 0.75rem; font-size: 1.15rem; color: var(--accent-cyan);">Scan Inspection</h3>
+        <div id="modalBody" style="font-size: 0.85rem; color: var(--text-secondary); display: flex; flex-direction: column; gap: 0.85rem;"></div>
+      </div>
+    </div>
+
+    <!-- Cyber Footer -->
+    <footer class="footer">
+      <div>
+        <strong>PhishGuard AI</strong> • Built for Advanced Cybersecurity & Phishing Detection Hackathon
+      </div>
+      <div class="footer-links">
+        <span class="footer-link">Google Gemini API Ready</span>
+        <span>•</span>
+        <span class="footer-link">VirusTotal API Ready</span>
+        <span>•</span>
+        <span class="footer-link">Google Safe Browsing v4</span>
+      </div>
+    </footer>
+
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
