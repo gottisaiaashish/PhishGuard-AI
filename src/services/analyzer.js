@@ -1,12 +1,14 @@
 /**
- * PhishGuard AI - Threat Analysis Engine
+ * PhishGuard AI - Enterprise Threat Analysis Engine
  * Dual-Engine Architecture:
- * 1. Primary: Google Gemini Generative AI (Live contextual NLP & Multimodal Vision)
- * 2. Fallback: Cybersecurity Heuristic Matrix (Lexical analysis, entropy, typosquatting & urgency heuristics)
+ * 1. Primary AI: Google Gemini 3.5 Flash (Contextual NLP + Multimodal Vision)
+ * 2. Secondary Engine: VirusTotal v3 (Live 70+ Antivirus Vendor & Domain Intel)
+ * 3. Fallback Heuristics: Local Zero-Day Heuristic & Lexical Detection Matrix
  */
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 const GEMINI_MODEL = import.meta.env.VITE_GEMINI_MODEL || 'gemini-3.5-flash';
+const VIRUSTOTAL_API_KEY = import.meta.env.VITE_VIRUSTOTAL_API_KEY || '';
 
 // Heuristic keyword definitions
 const URGENCY_PATTERNS = [
@@ -32,11 +34,15 @@ const RAW_IP_PATTERN = /https?:\/\/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/i;
 export async function analyzeThreatContent({ type, sender = '', subject = '', text = '', filename = '', imageBase64 = '' }) {
   const combinedText = `${sender} ${subject} ${text}`.trim();
 
-  // Try live Gemini API if key is present
+  // 1. Primary Analysis: Try live Gemini AI
   if (GEMINI_API_KEY && GEMINI_API_KEY.length > 10) {
     try {
       const geminiResult = await callGeminiAnalysis({ type, sender, subject, text, combinedText, imageBase64 });
       if (geminiResult) {
+        // Enrich URLs with live VirusTotal data if available
+        if (geminiResult.urls && geminiResult.urls.length > 0 && VIRUSTOTAL_API_KEY) {
+          geminiResult.urls = await enrichUrlsWithVirusTotal(geminiResult.urls);
+        }
         return geminiResult;
       }
     } catch (err) {
@@ -44,12 +50,26 @@ export async function analyzeThreatContent({ type, sender = '', subject = '', te
     }
   }
 
-  // Fallback / Standard Heuristic Engine
-  return runHeuristicAnalysis({ type, sender, subject, text, filename, combinedText });
+  // 2. Fallback / Standard Heuristic Engine
+  const heuristicResult = runHeuristicAnalysis({ type, sender, subject, text, filename, combinedText });
+  
+  // Enrich heuristic URLs with live VirusTotal
+  if (heuristicResult.urls && heuristicResult.urls.length > 0 && VIRUSTOTAL_API_KEY) {
+    heuristicResult.urls = await enrichUrlsWithVirusTotal(heuristicResult.urls);
+    // If VirusTotal found malicious links, adjust the score higher
+    const hasVtMalicious = heuristicResult.urls.some(u => u.threat === 'malicious');
+    if (hasVtMalicious && heuristicResult.score < 75) {
+      heuristicResult.score = Math.max(heuristicResult.score, 85);
+      heuristicResult.status = 'Phishing Detected';
+      heuristicResult.statusClass = 'phishing';
+    }
+  }
+
+  return heuristicResult;
 }
 
 /**
- * Call Google Gemini API
+ * Call Google Gemini 3.5 Flash API
  */
 async function callGeminiAnalysis({ type, sender, subject, text, combinedText, imageBase64 }) {
   const prompt = `You are PhishGuard AI, an elite cybersecurity threat analyst.
@@ -86,6 +106,7 @@ Notes on values:
 - "score": Integer from 0 to 100 (0-30: Safe, 31-69: Suspicious, 70-100: Phishing Detected).
 - "status": Must be "Safe", "Suspicious", or "Phishing Detected".
 - "threats": Array of objects with "name" and "level" ("critical" | "warning" | "clean").
+- Extract any HTTP/HTTPS URLs present in the text into "urls".
 - Return strictly raw JSON. Do not include markdown codeblocks or extra text.`;
 
   const requestBody = {
@@ -150,16 +171,89 @@ Notes on values:
     meta: {
       tokensAnalyzed: combinedText.split(/\s+/).length,
       nlpEntropy: (parsed.score * 0.084).toFixed(2),
-      engineVersion: `Google Gemini (${GEMINI_MODEL}) + PhishGuard Heuristics`
+      engineVersion: `Google Gemini (${GEMINI_MODEL}) + VirusTotal Intel`
     }
   };
+}
+
+/**
+ * Live VirusTotal v3 Domain & URL Reputation Enrichment
+ */
+async function enrichUrlsWithVirusTotal(urls) {
+  if (!VIRUSTOTAL_API_KEY) return urls;
+
+  return Promise.all(
+    urls.map(async (item) => {
+      try {
+        let domain = item.domain;
+        if (!domain && item.url) {
+          try {
+            domain = new URL(item.url).hostname;
+          } catch (e) {
+            domain = item.url.replace(/^https?:\/\//, '').split('/')[0];
+          }
+        }
+
+        if (!domain || domain === 'localhost' || domain.includes(':')) {
+          return item;
+        }
+
+        // Query VirusTotal domain report via Vite proxy or direct
+        const vtUrl = `/api/virustotal/domains/${domain}`;
+        const vtRes = await fetch(vtUrl, {
+          headers: {
+            'x-apikey': VIRUSTOTAL_API_KEY
+          }
+        });
+
+        if (!vtRes.ok) {
+          return item;
+        }
+
+        const vtData = await vtRes.json();
+        const attrs = vtData.data?.attributes;
+        const stats = attrs?.last_analysis_stats;
+
+        if (stats) {
+          const total = (stats.malicious || 0) + (stats.suspicious || 0) + (stats.harmless || 0) + (stats.undetected || 0);
+          const malCount = stats.malicious || 0;
+          const suspCount = stats.suspicious || 0;
+
+          const gsbVendor = attrs?.last_analysis_results?.['Google Safebrowsing']?.result || 'clean';
+
+          let threat = 'clean';
+          let label = 'Clean (VirusTotal)';
+          if (malCount >= 2) {
+            threat = 'malicious';
+            label = `Malicious (${malCount} Vendors)`;
+          } else if (malCount === 1 || suspCount >= 1) {
+            threat = 'suspicious';
+            label = `Suspicious (${malCount + suspCount} Flags)`;
+          }
+
+          return {
+            ...item,
+            domain: domain,
+            threat: threat,
+            label: label,
+            vtEngines: `${malCount} / ${total}`,
+            gsbStatus: gsbVendor === 'clean' ? 'SAFE' : gsbVendor.toUpperCase()
+          };
+        }
+
+        return item;
+      } catch (err) {
+        console.warn('VirusTotal enrichment error for', item.url, err);
+        return item;
+      }
+    })
+  );
 }
 
 /**
  * Local Heuristic & Lexical Analysis Matrix
  */
 function runHeuristicAnalysis({ type, sender, subject, text, filename, combinedText }) {
-  // Extract all HTTP/HTTPS URLs
   const urlRegex = /https?:\/\/[^\s"'<>\)]+/gi;
   const rawUrls = combinedText.match(urlRegex) || [];
   const uniqueUrls = [...new Set(rawUrls)];
@@ -322,7 +416,7 @@ function runHeuristicAnalysis({ type, sender, subject, text, filename, combinedT
     meta: {
       tokensAnalyzed: combinedText.split(/\s+/).length,
       nlpEntropy: (score * 0.084).toFixed(2),
-      engineVersion: 'PhishGuard Heuristics Engine v2.4'
+      engineVersion: 'PhishGuard Heuristics + VirusTotal Live Intel'
     }
   };
 }
