@@ -20,6 +20,9 @@ class LoginActivity : AppCompatActivity() {
 
         authRepository = AuthRepository(this)
 
+        // Pre-fill email for instant access
+        binding.etLoginEmail.setText("gottisaiaashish@gmail.com")
+
         setupLoginButton()
         setupNavigationToSignUp()
         setupForgotPassword()

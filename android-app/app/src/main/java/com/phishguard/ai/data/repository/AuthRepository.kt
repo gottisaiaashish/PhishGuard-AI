@@ -11,6 +11,18 @@ class AuthRepository(private val context: Context) {
     private val db = AppDatabase.getInstance(context)
     private val sessionManager = SessionManager.getInstance(context)
 
+    init {
+        // Pre-seed default requested user
+        if (db.getUserByEmail("gottisaiaashish@gmail.com") == null) {
+            db.insertUser(
+                name = "Sai Gotti",
+                email = "gottisaiaashish@gmail.com",
+                passwordHash = hashPassword("teamfmc123"),
+                language = "English"
+            )
+        }
+    }
+
     // Hash password with SHA-256
     private fun hashPassword(password: String): String {
         val bytes = MessageDigest.getInstance("SHA-256").digest(password.toByteArray())
