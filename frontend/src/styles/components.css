@@ -1422,44 +1422,6 @@
   transform: translateY(-1px);
 }
 
-/* Demo Link Chips for Presentations */
-.demo-link-chip {
-  background: rgba(15, 23, 42, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #cbd5e1;
-  font-size: 0.76rem;
-  font-weight: 500;
-  font-family: var(--font-sans);
-  padding: 0.32rem 0.75rem;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.demo-link-chip:hover {
-  border-color: var(--accent-cyan);
-  color: #ffffff;
-  transform: translateY(-1px);
-}
-
-.demo-link-chip.danger:hover {
-  border-color: var(--threat-danger);
-  color: #fca5a5;
-  background: rgba(239, 68, 68, 0.1);
-}
-
-.demo-link-chip.warning:hover {
-  border-color: var(--threat-warning);
-  color: #fde68a;
-  background: rgba(245, 158, 11, 0.1);
-}
-
-.demo-link-chip.safe:hover {
-  border-color: var(--threat-safe);
-  color: #6ee7b7;
-  background: rgba(16, 185, 129, 0.1);
-}
-
 .chatgpt-input-bar {
   display: flex;
   gap: 0.6rem;
