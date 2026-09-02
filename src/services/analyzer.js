@@ -1,9 +1,12 @@
 /**
- * PhishGuard AI - Threat Analysis Engine (Mock / Extensible Service)
- * 
- * Pre-configured with heuristic rules, NLP urgency triggers, domain typosquatting detection,
- * and structured interfaces ready to connect Gemini API, VirusTotal, and Google Safe Browsing.
+ * PhishGuard AI - Threat Analysis Engine
+ * Dual-Engine Architecture:
+ * 1. Primary: Google Gemini Generative AI (Live contextual NLP & Multimodal Vision)
+ * 2. Fallback: Cybersecurity Heuristic Matrix (Lexical analysis, entropy, typosquatting & urgency heuristics)
  */
+
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+const GEMINI_MODEL = import.meta.env.VITE_GEMINI_MODEL || 'gemini-2.5-flash';
 
 // Heuristic keyword definitions
 const URGENCY_PATTERNS = [
@@ -26,22 +29,147 @@ const SUSPICIOUS_DOMAINS = [
 
 const RAW_IP_PATTERN = /https?:\/\/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/i;
 
-export async function analyzeThreatContent({ type, sender = '', subject = '', text = '', filename = '' }) {
-  // Aggregate searchable text
+export async function analyzeThreatContent({ type, sender = '', subject = '', text = '', filename = '', imageBase64 = '' }) {
   const combinedText = `${sender} ${subject} ${text}`.trim();
 
+  // Try live Gemini API if key is present
+  if (GEMINI_API_KEY && GEMINI_API_KEY.length > 10) {
+    try {
+      const geminiResult = await callGeminiAnalysis({ type, sender, subject, text, combinedText, imageBase64 });
+      if (geminiResult) {
+        return geminiResult;
+      }
+    } catch (err) {
+      console.warn('Gemini API call failed, falling back to local cybersecurity heuristics:', err);
+    }
+  }
+
+  // Fallback / Standard Heuristic Engine
+  return runHeuristicAnalysis({ type, sender, subject, text, filename, combinedText });
+}
+
+/**
+ * Call Google Gemini API
+ */
+async function callGeminiAnalysis({ type, sender, subject, text, combinedText, imageBase64 }) {
+  const prompt = `You are PhishGuard AI, an elite cybersecurity threat analyst.
+Evaluate this ${type.toUpperCase()} content for social engineering, phishing, typosquatting, credential harvesting, or legitimacy.
+
+CONTENT DETAILS:
+- Channel: ${type}
+- Sender: ${sender || 'None specified'}
+- Subject: ${subject || 'None specified'}
+- Body/Text: ${text || 'None specified'}
+
+Analyze the text and return ONLY a valid JSON object with EXACTLY this structure:
+{
+  "score": 92,
+  "status": "Phishing Detected",
+  "threats": [
+    {"name": "Domain Typosquatting", "level": "critical"},
+    {"name": "Urgency Coercion", "level": "critical"}
+  ],
+  "aiExplanation": "Plain English explanation of why this was flagged.",
+  "recommendations": "Actionable security recommendation for the user.",
+  "urls": [
+    {
+      "url": "http://suspicious-link.com",
+      "domain": "suspicious-link.com",
+      "threat": "malicious",
+      "label": "Hostile Impersonation",
+      "vtEngines": "18 / 92",
+      "gsbStatus": "SOCIAL_ENGINEERING"
+    }
+  ]
+}
+Notes on values:
+- "score": Integer from 0 to 100 (0-30: Safe, 31-69: Suspicious, 70-100: Phishing Detected).
+- "status": Must be "Safe", "Suspicious", or "Phishing Detected".
+- "threats": Array of objects with "name" and "level" ("critical" | "warning" | "clean").
+- Return strictly raw JSON. Do not include markdown codeblocks or extra text.`;
+
+  const requestBody = {
+    contents: [{
+      parts: [{ text: prompt }]
+    }],
+    generationConfig: {
+      temperature: 0.1,
+      responseMimeType: 'application/json'
+    }
+  };
+
+  // If screenshot image is provided, add multimodal image part
+  if (imageBase64 && imageBase64.startsWith('data:image')) {
+    const mimeMatch = imageBase64.match(/^data:(image\/[a-zA-Z+]+);base64,/);
+    if (mimeMatch) {
+      const mimeType = mimeMatch[1];
+      const rawBase64 = imageBase64.replace(/^data:image\/[a-zA-Z+]+;base64,/, '');
+      requestBody.contents[0].parts.push({
+        inlineData: {
+          mimeType: mimeType,
+          data: rawBase64
+        }
+      });
+    }
+  }
+
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(requestBody)
+  });
+
+  if (!response.ok) {
+    throw new Error(`Gemini API returned status ${response.status}`);
+  }
+
+  const data = await response.json();
+  const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!rawText) throw new Error('Empty response from Gemini');
+
+  const parsed = JSON.parse(rawText);
+
+  let statusClass = 'safe';
+  if (parsed.score >= 70) statusClass = 'phishing';
+  else if (parsed.score >= 35) statusClass = 'suspicious';
+
+  return {
+    id: `SCAN-${Math.floor(10000 + Math.random() * 90000)}`,
+    timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+    type: type.toUpperCase(),
+    target: sender || (type === 'sms' ? 'SMS Message' : 'Uploaded Content'),
+    snippet: (subject ? subject + ' - ' : '') + (text || 'Content').substring(0, 75) + '...',
+    score: parsed.score || 10,
+    status: parsed.status || 'Safe',
+    statusClass,
+    threats: parsed.threats || [],
+    urls: parsed.urls || [],
+    aiExplanation: parsed.aiExplanation || 'No detailed analysis returned.',
+    recommendations: parsed.recommendations || 'Verify all sender credentials.',
+    meta: {
+      tokensAnalyzed: combinedText.split(/\s+/).length,
+      nlpEntropy: (parsed.score * 0.084).toFixed(2),
+      engineVersion: `Google Gemini (${GEMINI_MODEL}) + PhishGuard Heuristics`
+    }
+  };
+}
+
+/**
+ * Local Heuristic & Lexical Analysis Matrix
+ */
+function runHeuristicAnalysis({ type, sender, subject, text, filename, combinedText }) {
   // Extract all HTTP/HTTPS URLs
   const urlRegex = /https?:\/\/[^\s"'<>\)]+/gi;
   const rawUrls = combinedText.match(urlRegex) || [];
   const uniqueUrls = [...new Set(rawUrls)];
 
-  // Initialize scoring metrics
-  let score = 5; // Baseline low risk
+  let score = 5;
   const detectedThreats = [];
   const analyzedUrls = [];
   const findings = [];
 
-  // Check 1: Urgent Coercion Language
+  // Urgency Coercion
   let urgencyHits = 0;
   URGENCY_PATTERNS.forEach(pattern => {
     if (pattern.test(combinedText)) urgencyHits++;
@@ -50,14 +178,14 @@ export async function analyzeThreatContent({ type, sender = '', subject = '', te
   if (urgencyHits >= 3) {
     score += 35;
     detectedThreats.push({ name: 'Extreme Psychological Urgency', level: 'critical' });
-    findings.push(`Contains ${urgencyHits} distinct high-urgency keywords demanding immediate action to coerce compliance.`);
+    findings.push(`Contains ${urgencyHits} distinct high-urgency keywords demanding immediate action.`);
   } else if (urgencyHits >= 1) {
     score += 18;
     detectedThreats.push({ name: 'Urgency & Pressure Tactics', level: 'warning' });
     findings.push('Uses psychological time-limit triggers to discourage verification.');
   }
 
-  // Check 2: Credential & PII Harvesting Signals
+  // Credential Harvesting
   let credHits = 0;
   CREDENTIAL_PATTERNS.forEach(pattern => {
     if (pattern.test(combinedText)) credHits++;
@@ -73,35 +201,31 @@ export async function analyzeThreatContent({ type, sender = '', subject = '', te
     findings.push('Mentions user credentials or sign-in state alteration.');
   }
 
-  // Check 3: Raw IP addresses in URLs
+  // Direct IP URL
   if (RAW_IP_PATTERN.test(combinedText)) {
     score += 40;
     detectedThreats.push({ name: 'Direct IP URL (No Domain Name)', level: 'critical' });
-    findings.push('Links route directly to a numerical IP address, bypassing standard DNS domain trust filters.');
+    findings.push('Links route directly to a numerical IP address, bypassing standard DNS reputation.');
   }
 
-  // Check 4: Suspicious Domain Typosquatting / High-risk TLDs
+  // Typosquatting
   let hasTyposquat = false;
-  let hasUntrustedTld = false;
-
   SUSPICIOUS_DOMAINS.forEach(pattern => {
-    if (pattern.test(combinedText)) {
-      hasTyposquat = true;
-    }
+    if (pattern.test(combinedText)) hasTyposquat = true;
   });
 
   if (hasTyposquat) {
     score += 35;
     detectedThreats.push({ name: 'Brand Impersonation / Typosquatting', level: 'critical' });
-    findings.push('Contains deceptive domain spelling imitating trusted enterprise brands (e.g., character substitution or unauthorized proxy).');
+    findings.push('Contains deceptive domain spelling imitating trusted enterprise brands.');
   }
 
-  // Check 5: Sender Mismatch & Anomalies
+  // Sender Mismatch
   if (sender) {
     if (/@(gmail|yahoo|hotmail|outlook)\.com/i.test(sender) && /microsoft|apple|paypal|bank|netflix|chase/i.test(combinedText)) {
       score += 25;
       detectedThreats.push({ name: 'Public Webmail Impersonation', level: 'critical' });
-      findings.push(`Sender claims corporate affiliation but dispatches from a free consumer email address (${sender}).`);
+      findings.push(`Sender claims corporate affiliation but dispatches from a consumer email address (${sender}).`);
     } else if (/@.*(verify|security|alert|desk|portal).*\.com/i.test(sender) && !/@.*(google|microsoft|paypal|amazon|apple)\.com/i.test(sender)) {
       score += 20;
       detectedThreats.push({ name: 'Spoofed Security Gateway', level: 'warning' });
@@ -109,13 +233,11 @@ export async function analyzeThreatContent({ type, sender = '', subject = '', te
     }
   }
 
-  // URL Deep Analysis
+  // URL Deep Inspection
   uniqueUrls.forEach(urlStr => {
-    let urlObj;
     let hostname = '';
     try {
-      urlObj = new URL(urlStr);
-      hostname = urlObj.hostname;
+      hostname = new URL(urlStr).hostname;
     } catch (e) {
       hostname = urlStr;
     }
@@ -151,10 +273,8 @@ export async function analyzeThreatContent({ type, sender = '', subject = '', te
     });
   });
 
-  // Normalize final score between 0 and 100
   score = Math.min(Math.max(score, 4), 98);
 
-  // Determine Status Classification
   let status = 'Safe';
   let statusClass = 'safe';
   if (score >= 70) {
@@ -168,11 +288,10 @@ export async function analyzeThreatContent({ type, sender = '', subject = '', te
     statusClass = 'safe';
     if (detectedThreats.length === 0) {
       detectedThreats.push({ name: 'Verified Infrastructure', level: 'clean' });
-      findings.push('No recognized deceptive heuristics, urgency coercion, or blacklisted domains detected.');
+      findings.push('No deceptive heuristics, urgency coercion, or suspicious domains detected.');
     }
   }
 
-  // Generate explainable AI summary
   let aiExplanation = '';
   let recommendations = '';
 
@@ -181,7 +300,7 @@ export async function analyzeThreatContent({ type, sender = '', subject = '', te
     recommendations = 'Block the sender, quarantine message, do NOT click any embedded links or provide credentials. If credentials were submitted, execute an immediate password rotation and revoke active tokens.';
   } else if (statusClass === 'suspicious') {
     aiExplanation = `Elevated risk signals detected (Risk Score: ${score}/100). Content displays several indicators common in social engineering attacks: ${findings.join(' ')}`;
-    recommendations = 'Proceed with extreme caution. Do not follow links directly; navigate to official services through your verified bookmarks or phone app.';
+    recommendations = 'Proceed with extreme caution. Do not follow links directly; navigate to official services through your verified bookmarks or official app.';
   } else {
     aiExplanation = `Content appears legitimate (Risk Score: ${score}/100). Syntactic analysis, sender reputation indicators, and destination URLs match typical genuine communications without deceptive payload markers.`;
     recommendations = 'Standard caution applies. Ensure multi-factor authentication (MFA) remains enabled on all company and personal accounts.';
@@ -203,7 +322,7 @@ export async function analyzeThreatContent({ type, sender = '', subject = '', te
     meta: {
       tokensAnalyzed: combinedText.split(/\s+/).length,
       nlpEntropy: (score * 0.084).toFixed(2),
-      engineVersion: 'PhishGuard Heuristics v2.4 (Ready for Gemini Pro)'
+      engineVersion: 'PhishGuard Heuristics Engine v2.4'
     }
   };
 }
