@@ -12,8 +12,11 @@ from typing import Optional, List, Dict, Any
 from urllib.parse import urlparse
 
 import httpx
+import bcrypt
+import jwt
+from pymongo import MongoClient
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -23,11 +26,13 @@ load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 VIRUSTOTAL_API_KEY = os.getenv("VIRUSTOTAL_API_KEY", "")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
+MONGODB_URI = os.getenv("MONGODB_URI", "")
+JWT_SECRET = os.getenv("JWT_SECRET", "phishguard_ai_ultra_secure_jwt_secret_2026")
 
 app = FastAPI(
     title="PhishGuard AI - Threat Intelligence Engine",
-    version="2.4.0",
-    description="Enterprise Zero-Day Phishing Detection API integrating Google Gemini 3.5 Flash & VirusTotal v3."
+    version="2.5.0",
+    description="Enterprise Zero-Day Phishing Detection API integrating Google Gemini 3.5 Flash, VirusTotal v3 & MongoDB Atlas."
 )
 
 # Enable CORS for all origins (supports Vercel, localhost, and custom domains)
@@ -39,6 +44,40 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# MongoDB Database Connection
+mongo_client = None
+db = None
+users_col = None
+scans_col = None
+
+if MONGODB_URI:
+    try:
+        mongo_client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=6000)
+        db = mongo_client["phishguard"]
+        users_col = db["users"]
+        scans_col = db["scans"]
+        # Ensure email index
+        users_col.create_index("email", unique=True)
+        print(" Connected to MongoDB Atlas Cluster successfully!")
+
+        # Seed pre-requested account: gottisaiaashish@gmail.com / teamfmc123
+        default_email = "gottisaiaashish@gmail.com"
+        if users_col.find_one({"email": default_email}) is None:
+            hashed = bcrypt.hashpw("teamfmc123".encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+            users_col.insert_one({
+                "email": default_email,
+                "password_hash": hashed,
+                "full_name": "Sai Gotti",
+                "phone": "+91 98765 43210",
+                "plan": "Enterprise Shield",
+                "created_at": time.time(),
+                "total_scans": 0,
+                "threats_blocked": 0
+            })
+            print(f" Default MongoDB user created: {default_email}")
+    except Exception as e:
+        print(f"⚠️ MongoDB Connection Notice: {e}")
+
 # Request Models
 class ThreatAnalysisRequest(BaseModel):
     type: str  # 'email' | 'sms' | 'screenshot'
@@ -47,6 +86,26 @@ class ThreatAnalysisRequest(BaseModel):
     text: Optional[str] = ""
     filename: Optional[str] = ""
     imageBase64: Optional[str] = ""
+
+class RegisterRequest(BaseModel):
+    email: str
+    password: str
+    full_name: Optional[str] = "Sai Gotti"
+    phone: Optional[str] = ""
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+class ScanLogRequest(BaseModel):
+    user_email: Optional[str] = "gottisaiaashish@gmail.com"
+    sender: str
+    content: str
+    type: Optional[str] = "message"
+    is_threat: bool
+    verdict: str
+    threat_score: int
+    app: Optional[str] = ""
 
 # Heuristic Patterns
 URGENCY_PATTERNS = [
@@ -86,6 +145,7 @@ def health_check():
         "status": "healthy",
         "geminiConfigured": bool(GEMINI_API_KEY and len(GEMINI_API_KEY) > 10),
         "virusTotalConfigured": bool(VIRUSTOTAL_API_KEY and len(VIRUSTOTAL_API_KEY) > 10),
+        "databaseConfigured": bool(db is not None),
         "model": GEMINI_MODEL,
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
     }
@@ -398,3 +458,169 @@ Instructions:
     return {
         "answer": "### 🛡️ PhishGuard Security Advisory:\n\n1. **High-Risk Indicators**: The analyzed message exhibits patterns characteristic of brand impersonation and urgency coercion.\n2. **Golden Rule**: Legitimate institutions will never ask you to verify credentials through unverified links or SMS.\n3. **Next Step**: Delete this message immediately and block the sender."
     }
+
+# ==========================================
+# AUTHENTICATION & MONGODB ATLAS ENDPOINTS
+# ==========================================
+
+@app.post("/api/auth/register")
+def register_user(req: RegisterRequest):
+    if users_col is None:
+        raise HTTPException(status_code=503, detail="Database service not initialized")
+    
+    email_clean = req.email.strip().lower()
+    if not email_clean or "@" not in email_clean:
+        raise HTTPException(status_code=400, detail="Valid email address is required")
+    if len(req.password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    
+    if users_col.find_one({"email": email_clean}):
+        raise HTTPException(status_code=409, detail="An account with this email already exists")
+    
+    hashed = bcrypt.hashpw(req.password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    user_doc = {
+        "email": email_clean,
+        "password_hash": hashed,
+        "full_name": req.full_name or "Sai Gotti",
+        "phone": req.phone or "",
+        "plan": "Enterprise Shield",
+        "created_at": time.time(),
+        "total_scans": 0,
+        "threats_blocked": 0
+    }
+    users_col.insert_one(user_doc)
+    
+    token = jwt.encode(
+        {"email": email_clean, "exp": time.time() + 30 * 86400},
+        JWT_SECRET,
+        algorithm="HS256"
+    )
+    
+    return {
+        "success": True,
+        "message": "Registration successful",
+        "token": token,
+        "user": {
+            "email": email_clean,
+            "full_name": user_doc["full_name"],
+            "phone": user_doc["phone"],
+            "plan": user_doc["plan"],
+            "total_scans": 0,
+            "threats_blocked": 0
+        }
+    }
+
+@app.post("/api/auth/login")
+def login_user(req: LoginRequest):
+    if users_col is None:
+        raise HTTPException(status_code=503, detail="Database service not initialized")
+    
+    email_clean = req.email.strip().lower()
+    user = users_col.find_one({"email": email_clean})
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    stored_hash = user.get("password_hash", "")
+    if not bcrypt.checkpw(req.password.encode("utf-8"), stored_hash.encode("utf-8")):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    token = jwt.encode(
+        {"email": email_clean, "exp": time.time() + 30 * 86400},
+        JWT_SECRET,
+        algorithm="HS256"
+    )
+    
+    return {
+        "success": True,
+        "message": "Authentication successful",
+        "token": token,
+        "user": {
+            "email": email_clean,
+            "full_name": user.get("full_name", "Sai Gotti"),
+            "phone": user.get("phone", ""),
+            "plan": user.get("plan", "Enterprise Shield"),
+            "total_scans": user.get("total_scans", 0),
+            "threats_blocked": user.get("threats_blocked", 0)
+        }
+    }
+
+@app.get("/api/user/profile")
+def get_user_profile(authorization: Optional[str] = Header(None), email: Optional[str] = None):
+    if users_col is None:
+        raise HTTPException(status_code=503, detail="Database service not initialized")
+    
+    target_email = email
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.split(" ")[1]
+        try:
+            payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+            target_email = payload.get("email")
+        except Exception:
+            pass
+    
+    if not target_email:
+        target_email = "gottisaiaashish@gmail.com"
+    
+    user = users_col.find_one({"email": target_email.strip().lower()})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {
+        "email": user["email"],
+        "full_name": user.get("full_name", "Sai Gotti"),
+        "phone": user.get("phone", ""),
+        "plan": user.get("plan", "Enterprise Shield"),
+        "total_scans": user.get("total_scans", 0),
+        "threats_blocked": user.get("threats_blocked", 0),
+        "created_at": user.get("created_at")
+    }
+
+@app.post("/api/scans/log")
+def log_scan_event(req: ScanLogRequest):
+    if scans_col is None or users_col is None:
+        return {"success": False, "message": "Database not connected"}
+    
+    email_clean = (req.user_email or "gottisaiaashish@gmail.com").strip().lower()
+    scan_doc = {
+        "user_email": email_clean,
+        "sender": req.sender,
+        "content": req.content,
+        "type": req.type,
+        "is_threat": req.is_threat,
+        "verdict": req.verdict,
+        "threat_score": req.threat_score,
+        "app": req.app,
+        "timestamp": time.time()
+    }
+    res = scans_col.insert_one(scan_doc)
+    
+    # Increment user's scan counts in MongoDB
+    inc_fields = {"total_scans": 1}
+    if req.is_threat:
+        inc_fields["threats_blocked"] = 1
+    users_col.update_one({"email": email_clean}, {"$inc": inc_fields})
+    
+    return {"success": True, "scan_id": str(res.inserted_id)}
+
+@app.get("/api/scans/history")
+def get_scan_history(email: Optional[str] = "gottisaiaashish@gmail.com", limit: int = 20):
+    if scans_col is None:
+        return {"scans": []}
+    
+    email_clean = email.strip().lower()
+    cursor = scans_col.find({"user_email": email_clean}).sort("timestamp", -1).limit(limit)
+    scans = []
+    for doc in cursor:
+        scans.append({
+            "id": str(doc["_id"]),
+            "sender": doc.get("sender", ""),
+            "content": doc.get("content", ""),
+            "type": doc.get("type", "message"),
+            "is_threat": doc.get("is_threat", False),
+            "verdict": doc.get("verdict", ""),
+            "threat_score": doc.get("threat_score", 0),
+            "app": doc.get("app", ""),
+            "timestamp": doc.get("timestamp")
+        })
+    return {"scans": scans}
+
