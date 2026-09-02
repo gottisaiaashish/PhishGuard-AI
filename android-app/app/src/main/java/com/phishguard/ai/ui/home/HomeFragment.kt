@@ -59,6 +59,9 @@ class HomeFragment : Fragment() {
     }
 
     private fun setupQuickActions() {
+        binding.btnCardRunScan.setOnClickListener {
+            (activity as? MainActivity)?.navigateToTab(R.id.nav_scan, 0)
+        }
         binding.btnQuickScanMessage.setOnClickListener {
             (activity as? MainActivity)?.navigateToTab(R.id.nav_scan, 0)
         }
