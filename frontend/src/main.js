@@ -1,5 +1,5 @@
 import { PRESETS, INITIAL_HISTORY, SAMPLE_SCREENSHOT_SVG } from './data/mockData.js';
-import { analyzeThreatContent } from './services/analyzer.js';
+import { analyzeThreatContent, askGeminiFollowUp } from './services/analyzer.js';
 import { mountFuzzyText } from './components/FuzzyText.js';
 import { mountFaultyTerminal } from './components/FaultyTerminal.js';
 
@@ -73,6 +73,17 @@ const elements = {
   btnCopyReport: document.getElementById('btnCopyReport'),
   btnExportJson: document.getElementById('btnExportJson'),
   btnNewScan: document.getElementById('btnNewScan'),
+
+  // ChatGPT Assistant Elements
+  chatgptAssistantCard: document.getElementById('chatgptAssistantCard'),
+  chatgptMessagesStream: document.getElementById('chatgptMessagesStream'),
+  aiMainVerdictBubble: document.getElementById('aiMainVerdictBubble'),
+  aiTypingIndicator: document.getElementById('aiTypingIndicator'),
+  aiStreamContent: document.getElementById('aiStreamContent'),
+  chatSuggestions: document.getElementById('chatSuggestions'),
+  chatgptInputForm: document.getElementById('chatgptInputForm'),
+  chatgptUserInput: document.getElementById('chatgptUserInput'),
+  btnSendChat: document.getElementById('btnSendChat'),
 
   // Metrics
   metricTotalScans: document.getElementById('metricTotalScans'),
@@ -402,6 +413,28 @@ Recommendations: ${state.currentAnalysis.recommendations}`;
       }
     });
   }
+
+  // ChatGPT Interactive Follow-up Chat
+  if (elements.chatgptInputForm) {
+    elements.chatgptInputForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const question = elements.chatgptUserInput.value.trim();
+      if (!question) return;
+      elements.chatgptUserInput.value = '';
+      await handleChatFollowUp(question);
+    });
+  }
+
+  if (elements.chatSuggestions) {
+    elements.chatSuggestions.addEventListener('click', async (e) => {
+      const chip = e.target.closest('.chat-chip');
+      if (!chip) return;
+      const question = chip.getAttribute('data-question');
+      if (question) {
+        await handleChatFollowUp(question);
+      }
+    });
+  }
 }
 
 // Trigger Threat Analysis with Interactive HUD Telemetry
@@ -540,9 +573,8 @@ function renderAnalysisResult(res) {
     });
   }
 
-  // AI Explanation & Recommendation
-  elements.aiExplanationText.textContent = res.aiExplanation;
-  elements.aiRecommendationText.textContent = res.recommendations;
+  // Render ChatGPT Style Interactive Copilot Verdict
+  renderChatGptVerdict(res);
 
   // URLs Table
   elements.urlsTableBody.innerHTML = '';
@@ -566,9 +598,99 @@ function renderAnalysisResult(res) {
       elements.urlsTableBody.appendChild(row);
     });
   }
+}
 
-  // Smoothly scroll to results
-  elements.resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+// Render ChatGPT-style verdict with clear conversational breakdown
+function renderChatGptVerdict(res) {
+  if (!elements.aiStreamContent) return;
+
+  const isPhish = res.statusClass === 'phishing';
+  const isSusp = res.statusClass === 'suspicious';
+  
+  const headline = isPhish
+    ? '🚨 CRITICAL WARNING: High-Risk Phishing Attempt Detected'
+    : (isSusp ? '⚠️ CAUTION: Suspicious Communication Detected' : '✅ VERIFIED: Communication Appears Safe');
+
+  const headlineColor = isPhish ? 'var(--threat-danger)' : (isSusp ? 'var(--threat-warning)' : 'var(--threat-safe)');
+
+  // Clear any previous chat messages and reset to initial verdict
+  if (elements.chatgptMessagesStream) {
+    elements.chatgptMessagesStream.innerHTML = `
+      <div class="chat-bubble ai-bubble" id="aiMainVerdictBubble">
+        <h4 style="color: ${headlineColor}; display: flex; align-items: center; gap: 0.5rem; font-size: 1.08rem; margin-bottom: 0.75rem;">
+          ${headline} <span style="font-size: 0.8rem; font-family: var(--font-mono); opacity: 0.85;">(${res.score}/100 Risk)</span>
+        </h4>
+        <div style="font-size: 0.93rem; line-height: 1.65; color: #e2e8f0;">
+          <p style="margin-bottom: 0.75rem;">
+            <strong>AI Threat Summary:</strong> ${escapeHtml(res.aiExplanation)}
+          </p>
+          ${res.threats.length ? `
+            <div style="margin-bottom: 0.75rem;">
+              <strong style="color: #ffffff;">🔍 Deceptive Signals Unmasked:</strong>
+              <ul style="margin-top: 0.35rem;">
+                ${res.threats.map(t => `<li><strong>${escapeHtml(t.name)}</strong>: High probability social engineering pattern.</li>`).join('')}
+              </ul>
+            </div>
+          ` : ''}
+          <div style="background: rgba(0, 240, 255, 0.08); border-left: 3px solid ${headlineColor}; padding: 0.75rem 1rem; border-radius: 6px; font-size: 0.9rem; margin-top: 0.5rem;">
+            <strong style="color: #ffffff;">🛡️ What You Should Do:</strong>
+            <p style="margin-top: 0.25rem; color: #e2e8f0;">${escapeHtml(res.recommendations)}</p>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // Smoothly scroll straight down to the ChatGPT Assistant card so user instantly sees what's happening
+  setTimeout(() => {
+    if (elements.chatgptAssistantCard) {
+      elements.chatgptAssistantCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else if (elements.resultSection) {
+      elements.resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, 120);
+}
+
+// Handle Interactive ChatGPT Follow-up Q&A
+async function handleChatFollowUp(question) {
+  if (!elements.chatgptMessagesStream) return;
+
+  // Append user bubble
+  const userBubble = document.createElement('div');
+  userBubble.className = 'chat-bubble user-bubble';
+  userBubble.textContent = question;
+  elements.chatgptMessagesStream.appendChild(userBubble);
+
+  // Append loading AI bubble
+  const aiBubble = document.createElement('div');
+  aiBubble.className = 'chat-bubble ai-bubble';
+  aiBubble.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 0.6rem;">
+      <div class="typing-indicator"><span></span><span></span><span></span></div>
+      <span style="font-size: 0.82rem; color: var(--accent-cyan); font-family: var(--font-mono);">PhishGuard AI Thinking...</span>
+    </div>
+  `;
+  elements.chatgptMessagesStream.appendChild(aiBubble);
+  elements.chatgptMessagesStream.scrollTop = elements.chatgptMessagesStream.scrollHeight;
+
+  // Call Gemini Follow-up
+  const answer = await askGeminiFollowUp({
+    question,
+    context: state.currentAnalysis || {}
+  });
+
+  // Render formatted markdown answer
+  aiBubble.innerHTML = formatMarkdownToHtml(answer);
+  elements.chatgptMessagesStream.scrollTop = elements.chatgptMessagesStream.scrollHeight;
+}
+
+function formatMarkdownToHtml(md) {
+  if (!md) return '';
+  return md
+    .replace(/### (.*?)\n/g, '<h4 style="color:#ffffff;margin-top:0.5rem;margin-bottom:0.35rem;font-size:0.98rem;">$1</h4>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--accent-cyan);">$1</strong>')
+    .replace(/^- (.*?)$/gm, '<li style="margin-left:1.2rem; margin-bottom: 0.3rem;">$1</li>')
+    .replace(/\n\n/g, '<br>');
 }
 
 // Animate Circular SVG Gauge

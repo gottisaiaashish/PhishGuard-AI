@@ -9,7 +9,7 @@
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 const GEMINI_MODEL = import.meta.env.VITE_GEMINI_MODEL || 'gemini-3.5-flash';
 const VIRUSTOTAL_API_KEY = import.meta.env.VITE_VIRUSTOTAL_API_KEY || '';
-const BACKEND_API_URL = import.meta.env.VITE_BACKEND_API_URL || '';
+const BACKEND_API_URL = import.meta.env.VITE_BACKEND_API_URL || 'https://phishguard-ai-86wo.onrender.com';
 
 // Heuristic keyword definitions
 const URGENCY_PATTERNS = [
@@ -437,4 +437,91 @@ function runHeuristicAnalysis({ type, sender, subject, text, filename, combinedT
       engineVersion: 'PhishGuard Heuristics + VirusTotal Live Intel'
     }
   };
+}
+
+/**
+ * Interactive ChatGPT-style Follow-up with Gemini 3.5 Flash
+ */
+export async function askGeminiFollowUp({ question, context = {} }) {
+  // 1. Try Backend API first
+  if (BACKEND_API_URL) {
+    try {
+      const res = await fetch(`${BACKEND_API_URL.replace(/\/$/, '')}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question, context })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.answer) return data.answer;
+      }
+    } catch (err) {
+      console.warn('Backend chat API failed, falling back to direct or local assistant:', err);
+    }
+  }
+
+  // 2. Direct client-side Gemini if key is provided in environment
+  if (GEMINI_API_KEY && GEMINI_API_KEY.length > 10) {
+    try {
+      const prompt = `You are PhishGuard AI, an elite cybersecurity assistant protecting users from social engineering, phishing, and scam lures.
+
+Context of currently analyzed message:
+- Content: "${context.snippet || context.text || 'Suspicious communication'}"
+- Sender/Origin: "${context.target || context.sender || 'Unknown'}"
+- Security Verdict: ${context.status || 'Suspicious'} (${context.score || 80}/100 Risk Score)
+- Identified Threats: ${(context.threats || []).join(', ') || 'Urgency coercion, unverified link'}
+- AI Assessment: "${context.aiExplanation || ''}"
+
+The user has asked the following follow-up question:
+"${question}"
+
+Instructions:
+1. Speak in a helpful, conversational, expert cybersecurity tone (like ChatGPT).
+2. Give clear, direct bullet points.
+3. If there is immediate danger (e.g. user clicked a link or entered password), provide immediate incident-response steps.
+4. Keep the answer concise and easy to read.`;
+
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.3, maxOutputTokens: 700 }
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const answer = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (answer) return answer;
+      }
+    } catch (err) {
+      console.warn('Direct Gemini chat failed:', err);
+    }
+  }
+
+  // 3. Fallback intelligent answers for common queries
+  const q = question.toLowerCase();
+  if (q.includes('clicked') || q.includes('opened') || q.includes('already')) {
+    return `### 🚨 Immediate Incident Response Steps:
+1. **Disconnect or Close the Page**: Close the browser tab immediately and disconnect from public Wi-Fi.
+2. **Never Enter Credentials**: If a form loaded, do NOT enter passwords, OTPs, or credit card numbers.
+3. **Password Reset**: If you entered a password, change it immediately from a separate safe device and revoke all active sessions.
+4. **Notify Bank/IT**: Call your financial institution's official emergency helpline to place a temporary fraud lock on your card.`;
+  }
+
+  if (q.includes('report') || q.includes('it team')) {
+    return `### 📋 Incident Report Template:
+- **Incident Type**: Suspected Phishing / Social Engineering Lure
+- **Target Channel**: ${context.type || 'Email/SMS'}
+- **Reported Origin**: ${context.target || 'Unknown'}
+- **Payload/Link**: ${context.urlsFound?.[0] || 'Embedded hyperlink'}
+- **Risk Assessment**: ${context.score || 90}/100 (${context.status || 'High Risk'})
+- **Action Taken**: Quarantined and flagged via PhishGuard AI.`;
+  }
+
+  return `### 🛡️ Security Advisory:
+- **Status**: The analyzed communication exhibits high-risk indicators characteristic of credential harvesting.
+- **Safety Rule**: Legitimate institutions will never demand urgent action through third-party URL shorteners or generic domains.
+- **Next Step**: Delete the message and block the sender.`;
 }

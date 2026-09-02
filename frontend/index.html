@@ -242,25 +242,76 @@
               </div>
             </div>
 
-            <!-- AI Explanation & Why Flagged -->
-            <div class="ai-explanation-card">
-              <div class="ai-explanation-title">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M12 2v4"></path><path d="m4.93 4.93 2.83 2.83"></path><path d="M2 12h4"></path><path d="m4.93 19.07 2.83-2.83"></path><path d="M12 22v-4"></path><path d="m19.07 19.07-2.83-2.83"></path><path d="M22 12h-4"></path><path d="m19.07 4.93-2.83 2.83"></path>
-                </svg>
-                AI Threat Assessment & Breakdown
+            <!-- ChatGPT-Style Interactive AI Assistant -->
+            <div class="chatgpt-assistant-card" id="chatgptAssistantCard">
+              <div class="chatgpt-header">
+                <div class="chatgpt-avatar">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"></path>
+                    <rect x="4" y="8" width="16" height="12" rx="2"></rect>
+                    <line x1="8" y1="13" x2="8" y2="13.01"></line>
+                    <line x1="16" y1="13" x2="16" y2="13.01"></line>
+                    <path d="M10 17s1 1 2 1 2-1 2-1"></path>
+                  </svg>
+                </div>
+                <div class="chatgpt-title-meta">
+                  <div class="chatgpt-bot-name">
+                    PhishGuard AI Copilot <span class="ai-model-pill">Gemini 3.5 Flash Active</span>
+                  </div>
+                  <div class="chatgpt-bot-sub">Interactive Cybersecurity Threat Intelligence & Advisor</div>
+                </div>
               </div>
-              <p class="ai-explanation-text" id="aiExplanationText">
-                Analyzing linguistic structure and URL indicators...
-              </p>
-              <div class="ai-recommendation-box" id="aiRecommendationBox">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--threat-warning)" stroke-width="2" style="flex-shrink:0; margin-top:2px;">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <line x1="12" y1="8" x2="12" y2="12"></line>
-                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                </svg>
-                <span id="aiRecommendationText">Recommended actions will appear here.</span>
+
+              <!-- Streamed Main AI Verdict Message -->
+              <div class="chatgpt-messages-stream" id="chatgptMessagesStream">
+                <div class="chat-bubble ai-bubble" id="aiMainVerdictBubble">
+                  <div class="typing-indicator" id="aiTypingIndicator" style="display:none;">
+                    <span></span><span></span><span></span>
+                  </div>
+                  <div class="ai-stream-content" id="aiStreamContent">
+                    <p id="aiExplanationText">Analyzing message structure...</p>
+                    <div class="ai-recommendation-box" id="aiRecommendationBox" style="margin-top: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--threat-warning)" stroke-width="2" style="flex-shrink:0;">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="17"></line>
+                      </svg>
+                      <span id="aiRecommendationText">Recommended actions will appear here.</span>
+                    </div>
+                  </div>
+                </div>
               </div>
+
+              <!-- ChatGPT Prompt Suggestions -->
+              <div class="chatgpt-suggestions" id="chatSuggestions">
+                <span class="suggestions-label">💡 Suggested Questions:</span>
+                <button type="button" class="chat-chip" data-question="What should I do if I already clicked the link or provided details?">
+                  What if I already clicked?
+                </button>
+                <button type="button" class="chat-chip" data-question="Why is this bit.ly or shortened link dangerous?">
+                  Explain the link redirect
+                </button>
+                <button type="button" class="chat-chip" data-question="Draft an incident report email I can forward to IT Security.">
+                  Draft report for IT Team
+                </button>
+              </div>
+
+              <!-- Interactive Chat Input -->
+              <form class="chatgpt-input-bar" id="chatgptInputForm">
+                <input 
+                  type="text" 
+                  id="chatgptUserInput" 
+                  class="chatgpt-input" 
+                  placeholder="Ask PhishGuard AI anything about this threat (like ChatGPT)..." 
+                  autocomplete="off"
+                />
+                <button type="submit" class="chatgpt-send-btn" id="btnSendChat" aria-label="Send question">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                  </svg>
+                </button>
+              </form>
             </div>
 
             <!-- Suspicious URLs & Destination Analysis -->

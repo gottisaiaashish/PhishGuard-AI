@@ -331,3 +331,60 @@ def run_heuristics(req: ThreatAnalysisRequest, combined_text: str, vt_urls: List
             "engineVersion": "PhishGuard Backend Heuristics + VirusTotal v3"
         }
     }
+
+class ChatRequest(BaseModel):
+    question: str
+    context: Optional[Dict[str, Any]] = {}
+
+@app.post("/api/chat")
+async def chat_follow_up(req: ChatRequest):
+    question = req.question.strip()
+    ctx = req.context or {}
+
+    prompt = f"""You are PhishGuard AI, an elite cybersecurity assistant protecting users from social engineering, phishing, and scam lures.
+
+Context of currently analyzed message:
+- Content: "{ctx.get('snippet') or ctx.get('text') or 'Suspicious communication'}"
+- Sender/Origin: "{ctx.get('target') or ctx.get('sender') or 'Unknown'}"
+- Security Verdict: {ctx.get('status') or 'Suspicious'} ({ctx.get('score', 80)}/100 Risk Score)
+- Identified Threats: {', '.join(ctx.get('threats', [])) if isinstance(ctx.get('threats'), list) else 'Urgency coercion, unverified link'}
+- AI Assessment: "{ctx.get('aiExplanation', '')}"
+
+The user has asked the following follow-up question:
+"{question}"
+
+Instructions:
+1. Speak in a helpful, conversational, expert cybersecurity tone (like ChatGPT).
+2. Give clear, direct bullet points.
+3. If there is immediate danger (e.g. user clicked a link or entered password), provide immediate incident-response steps.
+4. Keep the answer concise and easy to read."""
+
+    if GEMINI_API_KEY:
+        try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent?key={GEMINI_API_KEY}"
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                res = await client.post(url, json={
+                    "contents": [{"parts": [{"text": prompt}]}],
+                    "generationConfig": {"temperature": 0.3, "maxOutputTokens": 700}
+                })
+                if res.status_code == 200:
+                    data = res.json()
+                    answer = data.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text")
+                    if answer:
+                        return {"answer": answer}
+        except Exception as e:
+            print(f"Backend Gemini Chat failed: {e}")
+
+    # Fallback response
+    q_low = question.lower()
+    if any(k in q_low for k in ["clicked", "opened", "already", "entered"]):
+        return {
+            "answer": "### 🚨 Immediate Incident Response Steps:\n1. **Disconnect from the Page**: Close the tab immediately.\n2. **Do Not Submit Info**: Never enter passwords, OTPs, or debit card PINs.\n3. **Rotate Passwords**: From another trusted device, reset your account credentials.\n4. **Alert Your Bank**: Call the official emergency fraud number on the back of your card to block unauthorized transactions."
+        }
+    elif any(k in q_low for k in ["report", "it team", "company"]):
+        return {
+            "answer": f"### 📋 Incident Report Template:\n- **Incident Type**: Suspected Phishing Lure\n- **Target Origin**: {ctx.get('target', 'Unknown')}\n- **Risk Assessment**: {ctx.get('score', 90)}/100 ({ctx.get('status', 'High Risk')})\n- **Action Taken**: Flagged and quarantined via PhishGuard AI."
+        }
+    return {
+        "answer": "### 🛡️ PhishGuard Security Advisory:\n- **Verdict**: The message contains deceptive patterns typical of financial phishing.\n- **Rule**: Legitimate institutions never demand immediate card verification through generic SMS or shortened URLs.\n- **Recommended Action**: Delete this message immediately and block the sender."
+    }
