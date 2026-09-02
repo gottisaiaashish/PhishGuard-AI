@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.media.RingtoneManager
 import android.os.Build
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,79 +23,121 @@ import java.util.regex.Pattern
 
 object ThreatScanner {
 
-    private const val CHANNEL_ID = "phishguard_threat_alerts"
+    private const val TAG = "ThreatScanner"
+    private const val CHANNEL_ID = "phishguard_threat_alerts_v2"
     private const val CHANNEL_NAME = "PhishGuard Threat Alerts"
-    private const val API_URL = "https://phishguard-ai-mu.vercel.app"
+
+    // Base64 encoded Gemini API Key
+    private val GEMINI_API_KEY = String(android.util.Base64.decode("QVEuQWI4Uk42Sk9OUUlvWXRDa1JRbG5KUWlaZjF0V1F1dVJjNHRMN3pydDgzems0TkZfVEE=", android.util.Base64.DEFAULT))
 
     private val client = OkHttpClient.Builder()
-        .connectTimeout(5, TimeUnit.SECONDS)
-        .readTimeout(5, TimeUnit.SECONDS)
+        .connectTimeout(6, TimeUnit.SECONDS)
+        .readTimeout(6, TimeUnit.SECONDS)
         .build()
 
-    // Fast zero-day heuristic patterns for instant on-device detection (<30ms)
-    private val URGENCY_PATTERN = Pattern.compile("(?i)(urgent|immediate|suspend|action required|freeze|unauthorized|blocked|kyc|pan card|aadhaar|debit card|credit card|lottery|kbc|winner|won|cashback|electricity|power cut|disconnect|part-time|salary|deposit|bonus|verify now|click here|apk)")
+    // Scam urgency & financial keywords
+    private val URGENCY_PATTERN = Pattern.compile("(?i)(urgent|immediate|suspend|action required|freeze|unauthorized|blocked|kyc|pan card|aadhaar|debit card|credit card|lottery|kbc|winner|won|cashback|electricity|power cut|disconnect|part-time|salary|deposit|bonus|verify now|click here|apk|claim|prize|bank)")
+    // Deceptive and risky domains
     private val SUSPICIOUS_DOMAINS = Pattern.compile("(?i)(micros0ft|paypa[il]|g00gle|netf[il]ix|azurepub\\.cc|\\.xyz|\\.top|\\.cc|\\.tk|\\.su|\\.online|\\.site|\\.club|\\.vip|\\.buzz|\\.link|\\.live|\\.work|\\.click|bit\\.ly|tinyurl|t\\.co|is\\.gd|rb\\.gy|cutt\\.ly)")
+    // Any link pattern (with or without http/https)
     private val URL_PATTERN = Pattern.compile("(?i)(https?://[^\\s\"'<>]+|www\\.[^\\s\"'<>]+|[a-zA-Z0-9-]+\\.(xyz|top|cc|tk|su|online|site|club|vip|buzz|link|live|work|click|info)[^\\s\"'<>]*)")
+
+    // Whitelist of major clean domains (so regular YouTube/Wikipedia links don't trigger false alarms)
+    private val SAFE_WHITELIST = listOf("youtube.com", "youtu.be", "google.com", "wikipedia.org", "github.com", "instagram.com", "facebook.com", "twitter.com", "x.com", "amazon.in", "amazon.com", "flipkart.com")
 
     fun scanNotification(context: Context, sender: String, messageText: String, packageName: String) {
         if (messageText.isBlank()) return
+        Log.d(TAG, "Scanning incoming message from $sender: $messageText")
 
-        // 1. Instant on-device heuristic detection
         val hasUrl = URL_PATTERN.matcher(messageText).find()
         val hasUrgency = URGENCY_PATTERN.matcher(messageText).find()
         val hasSuspiciousDomain = SUSPICIOUS_DOMAINS.matcher(messageText).find()
 
-        val isHighRisk = (hasUrl && hasUrgency) || hasSuspiciousDomain || (hasUrl && messageText.contains("http://", ignoreCase = true))
+        // 1. Instant On-Device Flagging (<20ms)
+        val isWhitelisted = SAFE_WHITELIST.any { messageText.contains(it, ignoreCase = true) }
+        val isInstantThreat = (!isWhitelisted && hasUrl && (hasUrgency || hasSuspiciousDomain || messageText.contains("http://", ignoreCase = true))) ||
+                hasSuspiciousDomain ||
+                (!isWhitelisted && hasUrl && (messageText.contains("sbi", ignoreCase = true) || messageText.contains("hdfc", ignoreCase = true) || messageText.contains("icici", ignoreCase = true) || messageText.contains("paytm", ignoreCase = true)))
 
-        if (isHighRisk) {
-            val appLabel = when {
-                packageName.contains("whatsapp", ignoreCase = true) -> "WhatsApp"
-                packageName.contains("mms", ignoreCase = true) || packageName.contains("messaging", ignoreCase = true) -> "SMS"
-                packageName.contains("android.gm", ignoreCase = true) -> "Gmail"
-                packageName.contains("telegram", ignoreCase = true) -> "Telegram"
-                else -> "Message"
-            }
+        if (isInstantThreat) {
+            Log.i(TAG, "⚡ Instant Threat Detected! Alerting user immediately.")
             dispatchSecurityAlert(
                 context = context,
-                sender = sender.ifBlank { appLabel },
-                summary = "Dangerous scam message intercepted! Do NOT click any links or share OTPs.",
+                sender = sender,
+                summary = "Dangerous scam or phishing link detected! Scammers are trying to steal your credentials or money.",
                 riskScore = 95
             )
             return
         }
 
-        // 2. Cloud AI NLP deep scan (async coroutine)
-        if (hasUrl) {
+        // 2. If it contains any link or urgency lure, run deep Gemini 3.1 Flash Lite AI analysis
+        if (hasUrl || hasUrgency) {
             CoroutineScope(Dispatchers.IO).launch {
                 try {
-                    val jsonBody = JSONObject().apply {
-                        put("type", "sms")
-                        put("sender", sender)
-                        put("text", messageText)
+                    val prompt = """You are a mobile phishing detector. Analyze this message:
+"$messageText"
+Sender: "$sender"
+
+Respond strictly with a JSON object containing:
+- "isPhish": boolean (true if phishing/scam lure/fraud/suspicious)
+- "score": integer (0 to 100)
+- "reason": brief 1-sentence warning for user"""
+
+                    val requestJson = JSONObject().apply {
+                        val partsArray = JSONArray().put(JSONObject().put("text", prompt))
+                        val contentsArray = JSONArray().put(JSONObject().put("parts", partsArray))
+                        put("contents", contentsArray)
+                        put("generationConfig", JSONObject().apply {
+                            put("temperature", 0.2)
+                            put("maxOutputTokens", 150)
+                            put("responseMimeType", "application/json")
+                        })
                     }
+
+                    val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=$GEMINI_API_KEY"
                     val request = Request.Builder()
-                        .url("$API_URL/api/analyze")
-                        .post(jsonBody.toString().toRequestBody("application/json".toMediaType()))
+                        .url(url)
+                        .post(requestJson.toString().toRequestBody("application/json".toMediaType()))
                         .build()
 
                     val response = client.newCall(request).execute()
                     if (response.isSuccessful) {
-                        val respBody = response.body?.string() ?: return@launch
-                        val result = JSONObject(respBody)
-                        val score = result.optInt("score", 0)
-                        val status = result.optString("status", "Safe")
+                        val bodyStr = response.body?.string() ?: return@launch
+                        val rootJson = JSONObject(bodyStr)
+                        val candidateText = rootJson.optJSONArray("candidates")
+                            ?.optJSONObject(0)
+                            ?.optJSONObject("content")
+                            ?.optJSONArray("parts")
+                            ?.optJSONObject(0)
+                            ?.optString("text") ?: ""
 
-                        if (score >= 70) {
-                            dispatchSecurityAlert(
-                                context = context,
-                                sender = sender,
-                                summary = result.optString("aiExplanation", "Suspicious link detected in message."),
-                                riskScore = score
-                            )
+                        if (candidateText.isNotBlank()) {
+                            val parsed = JSONObject(candidateText)
+                            val isPhish = parsed.optBoolean("isPhish", false)
+                            val score = parsed.optInt("score", 0)
+                            val reason = parsed.optString("reason", "Suspicious link flagged by AI.")
+
+                            if (isPhish || score >= 65) {
+                                dispatchSecurityAlert(
+                                    context = context,
+                                    sender = sender,
+                                    summary = reason,
+                                    riskScore = score
+                                )
+                            }
                         }
                     }
                 } catch (e: Exception) {
-                    // Fallback to local heuristic already checked
+                    Log.e(TAG, "Gemini scan failed: ${e.message}")
+                    // If network fails and message has a non-whitelisted URL, flag as cautionary
+                    if (hasUrl && !isWhitelisted) {
+                        dispatchSecurityAlert(
+                            context = context,
+                            sender = sender,
+                            summary = "Unverified external link received. Verify sender before clicking.",
+                            riskScore = 80
+                        )
+                    }
                 }
             }
         }
@@ -103,16 +146,17 @@ object ThreatScanner {
     fun dispatchSecurityAlert(context: Context, sender: String, summary: String, riskScore: Int) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        // Create high-importance channel with sound and vibration
+        // Create high-importance channel with sound and vibration for floating heads-up alert
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 CHANNEL_NAME,
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = "High-priority alerts for intercepted phishing and scam lures"
+                description = "High-priority security alerts for intercepted phishing and scam lures"
                 enableVibration(true)
-                vibrationPattern = longArrayOf(0, 350, 150, 350)
+                vibrationPattern = longArrayOf(0, 400, 150, 400)
+                lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
             }
             notificationManager.createNotificationChannel(channel)
         }
@@ -138,11 +182,13 @@ object ThreatScanner {
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setAutoCancel(true)
             .setSound(soundUri)
-            .setVibrate(longArrayOf(0, 350, 150, 350))
+            .setVibrate(longArrayOf(0, 400, 150, 400))
             .setContentIntent(pendingIntent)
             .setColor(0xFFFF3366.toInt()) // Red danger banner
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
             .build()
 
         notificationManager.notify(System.currentTimeMillis().toInt(), notification)
+        Log.i(TAG, "🚨 Security Alert notification dispatched for $sender!")
     }
 }
