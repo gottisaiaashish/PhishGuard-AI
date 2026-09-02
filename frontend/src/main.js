@@ -109,21 +109,21 @@ function initFaultyTerminalBg() {
   if (!bgContainer) return;
 
   mountFaultyTerminal(bgContainer, {
-    scale: 1.35,
-    gridMul: [2, 1],
-    digitSize: 1.2,
-    timeScale: 0.35,
+    scale: 1.75,
+    gridMul: [3, 2],
+    digitSize: 1.0,
+    timeScale: 0.22,
     pause: false,
-    scanlineIntensity: 0.45,
-    glitchAmount: 1.0,
-    flickerAmount: 0.75,
-    noiseAmp: 0.85,
-    curvature: 0.12,
-    tint: '#00ff88', // Exact Glowing Green matrix as in React Bits screenshot
+    scanlineIntensity: 0.25,
+    glitchAmount: 0.65,
+    flickerAmount: 0.4,
+    noiseAmp: 0.7,
+    curvature: 0.08,
+    tint: '#00f0ff', // Unified Cyber Cyan matching brand & UI icons
     mouseReact: true,
-    mouseStrength: 0.35,
+    mouseStrength: 0.25,
     pageLoadAnimation: true,
-    brightness: 0.52
+    brightness: 0.28 // Subtle high-tech ambient texture
   });
 }
 
@@ -139,17 +139,17 @@ function initFuzzyHero() {
     fontFamily: "'Inter', system-ui, sans-serif",
     color: '#00f0ff',
     enableHover: true,
-    baseIntensity: 0.16,
-    hoverIntensity: 0.58,
-    fuzzRange: 26,
+    baseIntensity: 0.12,
+    hoverIntensity: 0.45,
+    fuzzRange: 18,
     fps: 60,
     direction: 'horizontal',
-    transitionDuration: 8,
+    transitionDuration: 6,
     clickEffect: true,
     glitchMode: true,
-    glitchInterval: 2600,
-    glitchDuration: 180,
-    gradient: ['#00f0ff', '#6366f1', '#a855f7'],
+    glitchInterval: 3200,
+    glitchDuration: 140,
+    gradient: ['#ffffff', '#38bdf8', '#00f0ff'], // Cohesive White-to-Cyan cyber gradient
     letterSpacing: 4
   });
 }
