@@ -34,9 +34,14 @@
             </intent-filter>
         </activity>
 
-        <!-- Authentication Flow -->
+        <!-- Authentication Flow (Instagram-style separate Login & SignUp) -->
         <activity
-            android:name=".AuthActivity"
+            android:name=".LoginActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".SignUpActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
 

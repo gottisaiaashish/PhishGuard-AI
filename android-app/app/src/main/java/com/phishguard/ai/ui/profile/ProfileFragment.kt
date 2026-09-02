@@ -11,6 +11,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import com.phishguard.ai.LoginActivity
 import com.phishguard.ai.AuthActivity
 import com.phishguard.ai.R
 import com.phishguard.ai.data.SessionManager
@@ -142,7 +143,7 @@ class ProfileFragment : Fragment() {
                 .setMessage("Are you sure you want to log out of PhishGuard AI?")
                 .setPositiveButton("Log Out") { _, _ ->
                     authRepository.logout()
-                    val intent = Intent(requireContext(), AuthActivity::class.java).apply {
+                    val intent = Intent(requireContext(), LoginActivity::class.java).apply {
                         flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                     }
                     startActivity(intent)
