@@ -495,52 +495,52 @@ async function triggerAnalysis() {
   // Start real threat analysis asynchronously
   const analysisPromise = analyzeThreatContent(payload);
 
+  // Smoothly advance progress up to exactly 90% and hold there!
   let progress = 15;
-  const progressMessages = [
-    { target: 35, msg: 'Extracting destination hyperlinks & unraveling redirects...' },
-    { target: 58, msg: 'Querying live VirusTotal domain reputation intelligence...' },
-    { target: 78, msg: 'Connecting to Google Gemini 3.5 Flash neural threat engine...' },
-    { target: 92, msg: 'Synthesizing contextual threat vectors & psychological markers...' }
+  const stages = [
+    { target: 40, msg: 'Extracting destination hyperlinks & unshortening redirects...' },
+    { target: 68, msg: 'Querying live VirusTotal domain reputation intelligence...' },
+    { target: 90, msg: 'Synthesizing contextual threat vectors with Gemini 3.5 Flash...' }
   ];
 
-  let msgIndex = 0;
-  let isDone = false;
+  let currentStage = 0;
+  let isRequestDone = false;
 
   const progressInterval = setInterval(() => {
-    if (isDone) return;
-    if (msgIndex < progressMessages.length) {
-      const step = progressMessages[msgIndex];
-      if (progress < step.target) {
-        progress += 3;
+    if (isRequestDone) return;
+    if (currentStage < stages.length) {
+      const stage = stages[currentStage];
+      if (progress < stage.target) {
+        progress += 4;
         elements.hudProgressBar.style.width = `${progress}%`;
         elements.hudPercent.textContent = `${progress}% (Analyzing...)`;
       } else {
-        appendLog(step.msg);
-        msgIndex++;
+        appendLog(stage.msg);
+        currentStage++;
       }
-    } else if (progress < 94) {
-      progress += 1;
-      elements.hudProgressBar.style.width = `${progress}%`;
-      elements.hudPercent.textContent = `${progress}% (Finalizing...)`;
+    } else {
+      // Hold firmly at 90% while waiting for API!
+      progress = 90;
+      elements.hudProgressBar.style.width = '90%';
+      elements.hudPercent.textContent = '90% (Finalizing AI analysis...)';
     }
-  }, 180);
+  }, 120);
 
+  // Await the real API response
   let result;
   try {
     result = await analysisPromise;
   } catch (err) {
-    console.error('Analysis error:', err);
+    console.error('Analysis failed:', err);
   } finally {
-    isDone = true;
+    isRequestDone = true;
     clearInterval(progressInterval);
   }
 
-  // ONLY now that the response is 100% ready, hit 100%!
+  // The instant response is ready: hit 100% and reveal result immediately!
   elements.hudProgressBar.style.width = '100%';
   elements.hudPercent.textContent = '100% Complete';
-  appendLog('Threat analysis complete. Launching AI Copilot report...', true);
-
-  await new Promise(r => setTimeout(r, 220));
+  appendLog('Threat inspection complete. Verdict generated.', true);
 
   state.currentAnalysis = result;
 
@@ -677,14 +677,14 @@ function renderChatGptVerdict(res) {
     `;
   }
 
-  // Smoothly scroll straight down to the ChatGPT Assistant card so user instantly sees what's happening
-  setTimeout(() => {
+  // Immediately scroll to the ChatGPT Assistant card
+  requestAnimationFrame(() => {
     if (elements.chatgptAssistantCard) {
-      elements.chatgptAssistantCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      elements.chatgptAssistantCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } else if (elements.resultSection) {
       elements.resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-  }, 120);
+  });
 }
 
 // Handle Interactive ChatGPT Follow-up Q&A
