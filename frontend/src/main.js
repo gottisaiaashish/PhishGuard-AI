@@ -5,7 +5,7 @@ import { mountFaultyTerminal } from './components/FaultyTerminal.js';
 
 // Application State
 const state = {
-  activeTab: 'email', // 'email' | 'sms' | 'screenshot'
+  activeTab: 'url', // 'url' | 'email' | 'sms' | 'screenshot'
   uploadedFile: null,
   uploadedFileDataUrl: null,
   currentAnalysis: null,
@@ -19,9 +19,13 @@ const HISTORY_STORAGE_KEY = 'phishguard_scan_history_v1';
 const elements = {
   // Tabs
   tabBtns: document.querySelectorAll('.tab-btn'),
+  contentUrl: document.getElementById('contentUrl'),
   contentEmail: document.getElementById('contentEmail'),
   contentSms: document.getElementById('contentSms'),
   contentScreenshot: document.getElementById('contentScreenshot'),
+
+  // URL Input
+  urlInput: document.getElementById('urlInput'),
 
   // Email Inputs
   emailSender: document.getElementById('emailSender'),
@@ -221,9 +225,10 @@ function switchTab(tabId) {
     btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
   });
 
-  elements.contentEmail.classList.toggle('active', tabId === 'email');
-  elements.contentSms.classList.toggle('active', tabId === 'sms');
-  elements.contentScreenshot.classList.toggle('active', tabId === 'screenshot');
+  if (elements.contentUrl) elements.contentUrl.classList.toggle('active', tabId === 'url');
+  if (elements.contentEmail) elements.contentEmail.classList.toggle('active', tabId === 'email');
+  if (elements.contentSms) elements.contentSms.classList.toggle('active', tabId === 'sms');
+  if (elements.contentScreenshot) elements.contentScreenshot.classList.toggle('active', tabId === 'screenshot');
 }
 
 // Char Counters
@@ -345,6 +350,8 @@ function loadPreset(preset) {
 function initActionButtons() {
   // Clear
   elements.btnClearInputs.addEventListener('click', () => {
+    if (elements.urlInput) elements.urlInput.value = '';
+
     elements.emailSender.value = '';
     elements.emailSubject.value = '';
     elements.emailBody.value = '';
@@ -363,7 +370,8 @@ function initActionButtons() {
   // New Scan
   elements.btnNewScan.addEventListener('click', () => {
     window.scrollTo({ top: 120, behavior: 'smooth' });
-    if (state.activeTab === 'email') elements.emailBody.focus();
+    if (state.activeTab === 'url' && elements.urlInput) elements.urlInput.focus();
+    else if (state.activeTab === 'email') elements.emailBody.focus();
     else if (state.activeTab === 'sms') elements.smsBody.focus();
   });
 
@@ -441,7 +449,17 @@ Recommendations: ${state.currentAnalysis.recommendations}`;
 async function triggerAnalysis() {
   let payload = { type: state.activeTab };
 
-  if (state.activeTab === 'email') {
+  if (state.activeTab === 'url') {
+    const rawUrl = elements.urlInput ? elements.urlInput.value.trim() : '';
+    if (!rawUrl) {
+      alert('Please paste a link or URL to analyze.');
+      if (elements.urlInput) elements.urlInput.focus();
+      return;
+    }
+    payload.url = rawUrl;
+    payload.target = rawUrl;
+    payload.text = rawUrl;
+  } else if (state.activeTab === 'email') {
     payload.sender = elements.emailSender.value.trim();
     payload.subject = elements.emailSubject.value.trim();
     payload.text = elements.emailBody.value.trim();

@@ -49,7 +49,15 @@
     <main class="workbench-card" id="workbenchCard">
       <!-- Input Mode Switcher Tabs -->
       <nav class="tabs-nav" role="tablist">
-        <button class="tab-btn active" data-tab="email" id="tabEmail" role="tab" aria-selected="true">
+        <button class="tab-btn active" data-tab="url" id="tabUrl" role="tab" aria-selected="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+          </svg>
+          Link / URL Scanner
+        </button>
+
+        <button class="tab-btn" data-tab="email" id="tabEmail" role="tab" aria-selected="false">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect width="20" height="16" x="2" y="4" rx="2"></rect>
             <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
@@ -74,8 +82,28 @@
         </button>
       </nav>
 
+      <!-- Tab Content: Link / URL Scanner -->
+      <div class="tab-content active" id="contentUrl" role="tabpanel">
+        <div class="form-group">
+          <label class="form-label" for="urlInput">
+            <span>Suspicious Link / Target URL</span>
+            <span class="char-counter">Direct Endpoint</span>
+          </label>
+          <input 
+            type="url" 
+            id="urlInput" 
+            class="text-input" 
+            style="font-size: 1rem; padding: 0.85rem 1.15rem;" 
+            placeholder="Paste suspicious link here (e.g. https://bit.ly/sbi-verify-kyc or http://account-update-bank.com)..."
+          />
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem; line-height: 1.5;">
+            PhishGuard AI unmasks URL shorteners, inspects domain typosquatting, checks 70+ VirusTotal antivirus engines, and analyzes landing page intent.
+          </div>
+        </div>
+      </div>
+
       <!-- Tab Content: Email -->
-      <div class="tab-content active" id="contentEmail" role="tabpanel">
+      <div class="tab-content" id="contentEmail" role="tabpanel">
         <div class="form-grid">
           <div class="form-group">
             <label class="form-label" for="emailSender">

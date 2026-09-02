@@ -33,6 +33,12 @@ const SUSPICIOUS_DOMAINS = [
 const RAW_IP_PATTERN = /https?:\/\/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/i;
 
 export async function analyzeThreatContent({ type, sender = '', subject = '', text = '', filename = '', imageBase64 = '' }) {
+  if (type === 'url' && text.trim()) {
+    if (!/^https?:\/\//i.test(text.trim())) {
+      text = `https://${text.trim()}`;
+    }
+  }
+
   const combinedText = `${sender} ${subject} ${text}`.trim();
 
   // 0. Primary Server: Call Dedicated FastAPI Backend (Render) if configured
@@ -274,6 +280,10 @@ async function enrichUrlsWithVirusTotal(urls) {
 function runHeuristicAnalysis({ type, sender, subject, text, filename, combinedText }) {
   const urlRegex = /https?:\/\/[^\s"'<>\)]+/gi;
   const rawUrls = combinedText.match(urlRegex) || [];
+  if (type === 'url' && text.trim()) {
+    const norm = /^https?:\/\//i.test(text.trim()) ? text.trim() : `https://${text.trim()}`;
+    if (!rawUrls.includes(norm)) rawUrls.push(norm);
+  }
   const uniqueUrls = [...new Set(rawUrls)];
 
   let score = 5;
@@ -422,7 +432,7 @@ function runHeuristicAnalysis({ type, sender, subject, text, filename, combinedT
     id: `SCAN-${Math.floor(10000 + Math.random() * 90000)}`,
     timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
     type: type.toUpperCase(),
-    target: sender || filename || (type === 'sms' ? 'SMS Message' : 'Uploaded Content'),
+    target: (type === 'url' ? text.trim() : (sender || filename || (type === 'sms' ? 'SMS Message' : 'Uploaded Content'))),
     snippet: (subject ? subject + ' - ' : '') + (text || filename || 'Visual Scan Content').substring(0, 75) + '...',
     score,
     status,
