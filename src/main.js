@@ -373,8 +373,9 @@ async function triggerAnalysis() {
       return;
     }
     payload.filename = (state.uploadedFile && state.uploadedFile.name) || 'screenshot.png';
+    payload.imageBase64 = state.uploadedFileDataUrl;
     payload.text = (state.uploadedFile && state.uploadedFile.mockOcr) ||
-      'https://login-micros0ft-security-verify.azurepub.cc/auth Microsoft sign in re-enter password urgently';
+      'Suspicious login portal or email screenshot for visual phishing inspection';
   }
 
   // Visual Scanning State
