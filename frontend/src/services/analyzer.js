@@ -12,7 +12,8 @@ const _d = (s) => {
 };
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || _d('QVEuQWI4Uk42Sk9OUUlvWXRDa1JRbG5KUWlaZjF0V1F1dVJjNHRMN3pydDgzems0TkZfVEE=');
-const GEMINI_MODEL = import.meta.env.VITE_GEMINI_MODEL || 'gemini-3.5-flash';
+const GEMINI_MODELS = ['gemini-3.1-flash-lite', 'gemini-3-flash-preview', 'gemini-flash-latest', 'gemini-flash-lite-latest', 'gemini-3.5-flash-lite'];
+const GEMINI_MODEL = import.meta.env.VITE_GEMINI_MODEL || GEMINI_MODELS[0];
 const VIRUSTOTAL_API_KEY = import.meta.env.VITE_VIRUSTOTAL_API_KEY || _d('NWU3NmZmM2ZkNjQwNGQyNzhiZmQyYTg5MmZhNDViNzUxNzBiYjYyNWFjMTI5NDllN2ZiOTBkNTY2MjE0OTYzYw==');
 const BACKEND_API_URL = import.meta.env.VITE_BACKEND_API_URL || 'https://phishguard-ai-86wo.onrender.com';
 
@@ -167,18 +168,30 @@ Notes on values:
     }
   }
 
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(requestBody)
-  });
-
-  if (!response.ok) {
-    throw new Error(`Gemini API returned status ${response.status}`);
+  let data = null;
+  let activeModel = GEMINI_MODELS[0];
+  for (const m of GEMINI_MODELS) {
+    try {
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${GEMINI_API_KEY}`;
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody)
+      });
+      if (response.ok) {
+        data = await response.json();
+        activeModel = m;
+        break;
+      }
+    } catch (e) {
+      console.warn(`Analysis model ${m} failed:`, e);
+    }
   }
 
-  const data = await response.json();
+  if (!data) {
+    throw new Error('All Gemini model candidates failed or rate-limited');
+  }
+
   const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!rawText) throw new Error('Empty response from Gemini');
 
@@ -495,19 +508,25 @@ CRITICAL INSTRUCTIONS:
 5. Format your response cleanly with clear numbered steps (1., 2., 3.) or bullet points, and use **bold text** for key action words so it is effortless to scan.
 6. Keep the response concise, punchy, and under 160 words.`;
 
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.4, maxOutputTokens: 500 }
-        })
-      });
+      for (const m of GEMINI_MODELS) {
+        try {
+          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${GEMINI_API_KEY}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { temperature: 0.4, maxOutputTokens: 500 }
+            })
+          });
 
-      if (res.ok) {
-        const data = await res.json();
-        const answer = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (answer && answer.trim().length > 0) return answer.trim();
+          if (res.ok) {
+            const data = await res.json();
+            const answer = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (answer && answer.trim().length > 0) return answer.trim();
+          }
+        } catch (mErr) {
+          console.warn(`Direct model ${m} failed:`, mErr);
+        }
       }
     } catch (err) {
       console.warn('Direct Gemini chat failed, trying backend fallback:', err);
