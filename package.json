@@ -2,8 +2,15 @@
   "name": "phishguard-ai-root",
   "private": true,
   "version": "1.0.0",
+  "workspaces": [
+    "frontend"
+  ],
   "scripts": {
     "dev": "npm --prefix frontend run dev",
-    "build": "npm --prefix frontend run build"
+    "build": "npm --prefix frontend install && npm --prefix frontend run build"
+  },
+  "dependencies": {
+    "ogl": "^1.0.11",
+    "vite": "^6.2.0"
   }
 }
