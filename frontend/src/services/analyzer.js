@@ -9,6 +9,7 @@
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 const GEMINI_MODEL = import.meta.env.VITE_GEMINI_MODEL || 'gemini-3.5-flash';
 const VIRUSTOTAL_API_KEY = import.meta.env.VITE_VIRUSTOTAL_API_KEY || '';
+const BACKEND_API_URL = import.meta.env.VITE_BACKEND_API_URL || '';
 
 // Heuristic keyword definitions
 const URGENCY_PATTERNS = [
@@ -34,7 +35,24 @@ const RAW_IP_PATTERN = /https?:\/\/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/i;
 export async function analyzeThreatContent({ type, sender = '', subject = '', text = '', filename = '', imageBase64 = '' }) {
   const combinedText = `${sender} ${subject} ${text}`.trim();
 
-  // 1. Primary Analysis: Try live Gemini AI
+  // 0. Primary Server: Call Dedicated FastAPI Backend (Render) if configured
+  if (BACKEND_API_URL) {
+    try {
+      const res = await fetch(`${BACKEND_API_URL.replace(/\/$/, '')}/api/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, sender, subject, text, filename, imageBase64 })
+      });
+      if (res.ok) {
+        const backendData = await res.json();
+        return backendData;
+      }
+    } catch (err) {
+      console.warn('Backend API call failed, falling back to client-side AI engine:', err);
+    }
+  }
+
+  // 1. Client-Side AI Analysis: Try live Gemini AI
   if (GEMINI_API_KEY && GEMINI_API_KEY.length > 10) {
     try {
       const geminiResult = await callGeminiAnalysis({ type, sender, subject, text, combinedText, imageBase64 });
