@@ -18,13 +18,16 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 
 object ThreatScanner {
 
     private const val TAG = "ThreatScanner"
-    private const val CHANNEL_ID = "phishguard_threat_alerts_v2"
+    private const val CHANNEL_ID = "phishguard_threat_alerts_v3"
     private const val CHANNEL_NAME = "PhishGuard Threat Alerts"
 
     // Base64 encoded Gemini API Key
@@ -35,20 +38,23 @@ object ThreatScanner {
         .readTimeout(6, TimeUnit.SECONDS)
         .build()
 
+    private val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+
     // Scam urgency & financial keywords
-    private val URGENCY_PATTERN = Pattern.compile("(?i)(urgent|immediate|suspend|action required|freeze|unauthorized|blocked|kyc|pan card|aadhaar|debit card|credit card|lottery|kbc|winner|won|cashback|electricity|power cut|disconnect|part-time|salary|deposit|bonus|verify now|click here|apk|claim|prize|bank)")
+    private val URGENCY_PATTERN = Pattern.compile("(?i)(urgent|immediate|suspend|action required|freeze|unauthorized|blocked|kyc|pan card|aadhaar|debit card|credit card|lottery|kbc|winner|won|cashback|electricity|power cut|disconnect|part-time|salary|deposit|bonus|verify now|click here|apk|claim|prize|bank|account blocked)")
     // Deceptive and risky domains
     private val SUSPICIOUS_DOMAINS = Pattern.compile("(?i)(micros0ft|paypa[il]|g00gle|netf[il]ix|azurepub\\.cc|\\.xyz|\\.top|\\.cc|\\.tk|\\.su|\\.online|\\.site|\\.club|\\.vip|\\.buzz|\\.link|\\.live|\\.work|\\.click|bit\\.ly|tinyurl|t\\.co|is\\.gd|rb\\.gy|cutt\\.ly)")
     // Any link pattern (with or without http/https)
     private val URL_PATTERN = Pattern.compile("(?i)(https?://[^\\s\"'<>]+|www\\.[^\\s\"'<>]+|[a-zA-Z0-9-]+\\.(xyz|top|cc|tk|su|online|site|club|vip|buzz|link|live|work|click|info)[^\\s\"'<>]*)")
 
-    // Whitelist of major clean domains (so regular YouTube/Wikipedia links don't trigger false alarms)
+    // Whitelist of major clean domains
     private val SAFE_WHITELIST = listOf("youtube.com", "youtu.be", "google.com", "wikipedia.org", "github.com", "instagram.com", "facebook.com", "twitter.com", "x.com", "amazon.in", "amazon.com", "flipkart.com")
 
     fun scanNotification(context: Context, sender: String, messageText: String, packageName: String) {
         if (messageText.isBlank()) return
-        Log.d(TAG, "Scanning incoming message from $sender: $messageText")
+        Log.e(TAG, "🔍 Scanning incoming message from $sender: $messageText")
 
+        val currentTime = timeFormat.format(Date())
         val hasUrl = URL_PATTERN.matcher(messageText).find()
         val hasUrgency = URGENCY_PATTERN.matcher(messageText).find()
         val hasSuspiciousDomain = SUSPICIOUS_DOMAINS.matcher(messageText).find()
@@ -60,7 +66,17 @@ object ThreatScanner {
                 (!isWhitelisted && hasUrl && (messageText.contains("sbi", ignoreCase = true) || messageText.contains("hdfc", ignoreCase = true) || messageText.contains("icici", ignoreCase = true) || messageText.contains("paytm", ignoreCase = true)))
 
         if (isInstantThreat) {
-            Log.i(TAG, "⚡ Instant Threat Detected! Alerting user immediately.")
+            Log.e(TAG, "⚡ INSTANT THREAT DETECTED! Alerting user immediately.")
+            LiveNotificationTracker.addLog(
+                InterceptedLog(
+                    time = currentTime,
+                    app = packageName,
+                    sender = sender,
+                    text = messageText,
+                    isThreat = true,
+                    verdict = "🚨 Phishing Scam Link Blocked"
+                )
+            )
             dispatchSecurityAlert(
                 context = context,
                 sender = sender,
@@ -118,28 +134,54 @@ Respond strictly with a JSON object containing:
                             val reason = parsed.optString("reason", "Suspicious link flagged by AI.")
 
                             if (isPhish || score >= 65) {
+                                LiveNotificationTracker.addLog(
+                                    InterceptedLog(
+                                        time = currentTime,
+                                        app = packageName,
+                                        sender = sender,
+                                        text = messageText,
+                                        isThreat = true,
+                                        verdict = "🚨 AI Scam Detected ($score/100)"
+                                    )
+                                )
                                 dispatchSecurityAlert(
                                     context = context,
                                     sender = sender,
                                     summary = reason,
                                     riskScore = score
                                 )
+                                return@launch
                             }
                         }
                     }
                 } catch (e: Exception) {
                     Log.e(TAG, "Gemini scan failed: ${e.message}")
-                    // If network fails and message has a non-whitelisted URL, flag as cautionary
-                    if (hasUrl && !isWhitelisted) {
-                        dispatchSecurityAlert(
-                            context = context,
-                            sender = sender,
-                            summary = "Unverified external link received. Verify sender before clicking.",
-                            riskScore = 80
-                        )
-                    }
                 }
+
+                // If AI found it clean or non-threat
+                LiveNotificationTracker.addLog(
+                    InterceptedLog(
+                        time = currentTime,
+                        app = packageName,
+                        sender = sender,
+                        text = messageText,
+                        isThreat = false,
+                        verdict = "✅ Verified Clean"
+                    )
+                )
             }
+        } else {
+            // Regular chat message (e.g. "hi", "how are you")
+            LiveNotificationTracker.addLog(
+                InterceptedLog(
+                    time = currentTime,
+                    app = packageName,
+                    sender = sender,
+                    text = messageText,
+                    isThreat = false,
+                    verdict = "✅ Safe Message"
+                )
+            )
         }
     }
 
@@ -189,6 +231,6 @@ Respond strictly with a JSON object containing:
             .build()
 
         notificationManager.notify(System.currentTimeMillis().toInt(), notification)
-        Log.i(TAG, "🚨 Security Alert notification dispatched for $sender!")
+        Log.e(TAG, "🚨 Security Alert notification DISPATCHED for $sender!")
     }
 }

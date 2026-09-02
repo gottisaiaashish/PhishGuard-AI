@@ -5,6 +5,30 @@ import android.os.Build
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
+data class InterceptedLog(
+    val time: String,
+    val app: String,
+    val sender: String,
+    val text: String,
+    val isThreat: Boolean,
+    val verdict: String
+)
+
+object LiveNotificationTracker {
+    val logs = mutableListOf<InterceptedLog>()
+    var onNewLog: ((InterceptedLog) -> Unit)? = null
+
+    @Synchronized
+    fun addLog(log: InterceptedLog) {
+        logs.add(0, log)
+        if (logs.size > 20) logs.removeAt(logs.lastIndex)
+        onNewLog?.invoke(log)
+    }
+}
 
 class PhishGuardNotificationService : NotificationListenerService() {
 
@@ -19,10 +43,10 @@ class PhishGuardNotificationService : NotificationListenerService() {
 
         val packageName = sbn.packageName ?: return
 
-        // 1. Ignore notifications from our own app to avoid infinite loops
+        // 1. Ignore notifications from our own app
         if (packageName == applicationContext.packageName) return
 
-        // 2. Ignore non-messaging system apps (battery, android system, download manager)
+        // 2. Ignore non-messaging system packages
         if (packageName == "android" || packageName == "com.android.systemui" || packageName == "com.android.vending") {
             return
         }
@@ -30,7 +54,7 @@ class PhishGuardNotificationService : NotificationListenerService() {
         val notification = sbn.notification ?: return
         val extras = notification.extras ?: return
 
-        // Extract title (WhatsApp uses CharSequence for sender/group)
+        // Extract title (WhatsApp uses CharSequence)
         val title = extras.getCharSequence(Notification.EXTRA_TITLE)?.toString()
             ?: extras.getString(Notification.EXTRA_TITLE)
             ?: ""
@@ -45,11 +69,11 @@ class PhishGuardNotificationService : NotificationListenerService() {
         val textLines = extras.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
         val linesJoined = textLines?.joinToString(" ") { it.toString() } ?: ""
 
-        // Combine all extracted text candidates to get the full message
+        // Find the longest, most detailed text content
         val candidateTexts = listOf(bigText, linesJoined, text, ticker, subText)
         val fullContent = candidateTexts.filter { it.isNotBlank() }.maxByOrNull { it.length } ?: ""
 
-        Log.d(TAG, "Notification received from [$packageName] Title: '$title' Body: '$fullContent'")
+        Log.e(TAG, "🟢 INTERCEPTED NOTIFICATION from [$packageName] Title: '$title' Body: '$fullContent'")
 
         if (fullContent.isNotBlank() || title.isNotBlank()) {
             val appLabel = when {
@@ -62,12 +86,13 @@ class PhishGuardNotificationService : NotificationListenerService() {
             }
 
             val effectiveSender = if (title.isNotBlank()) "$appLabel ($title)" else appLabel
+            val messageToScan = fullContent.ifBlank { title }
 
-            // Send to Threat Scanner
+            // Scan with ThreatScanner
             ThreatScanner.scanNotification(
                 context = applicationContext,
                 sender = effectiveSender,
-                messageText = fullContent.ifBlank { title },
+                messageText = messageToScan,
                 packageName = packageName
             )
         }
@@ -76,13 +101,13 @@ class PhishGuardNotificationService : NotificationListenerService() {
     override fun onListenerConnected() {
         super.onListenerConnected()
         isConnected = true
-        Log.i(TAG, "🟢 PhishGuard NotificationListenerService connected to Android OS!")
+        Log.e(TAG, "🟢 PhishGuard NotificationListenerService CONNECTED to Android OS!")
     }
 
     override fun onListenerDisconnected() {
         super.onListenerDisconnected()
         isConnected = false
-        Log.w(TAG, "🔴 PhishGuard NotificationListenerService disconnected.")
+        Log.e(TAG, "🔴 PhishGuard NotificationListenerService DISCONNECTED.")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             requestRebind(android.content.ComponentName(this, PhishGuardNotificationService::class.java))
         }
