@@ -474,38 +474,74 @@ async function triggerAnalysis() {
   // Visual Scanning State
   elements.btnAnalyze.disabled = true;
   elements.scanningHud.classList.add('active');
-  elements.hudProgressBar.style.width = '0%';
-  elements.hudPercent.textContent = '0%';
+  elements.hudProgressBar.style.width = '12%';
+  elements.hudPercent.textContent = '12% (Initializing...)';
   elements.hudTelemetryLog.innerHTML = '';
 
   if (state.activeTab === 'screenshot') {
     elements.imagePreviewWrapper.classList.add('scanning');
   }
 
-  // Telemetry stages simulation
-  const telemetrySteps = [
-    { pct: 20, log: 'Initializing NLP heuristic pipelines & tokenizer...' },
-    { pct: 45, log: 'Parsing lexical structure, RFC headers & psychological urgency tokens...' },
-    { pct: 70, log: 'Extracting destination hyperlinks & querying domain reputation...' },
-    { pct: 90, log: 'Synthesizing threat vector matrix & generating explainable breakdown...' },
-    { pct: 100, log: 'Analysis complete. Compiling threat score & intelligence report.' }
-  ];
-
-  for (let i = 0; i < telemetrySteps.length; i++) {
-    const step = telemetrySteps[i];
-    await new Promise(r => setTimeout(r, 220));
-    elements.hudProgressBar.style.width = `${step.pct}%`;
-    elements.hudPercent.textContent = `${step.pct}%`;
-
+  function appendLog(msg, isFinished = false) {
     const logLine = document.createElement('div');
     logLine.className = 'hud-log-line';
-    logLine.innerHTML = `<span class="timestamp">[${new Date().toLocaleTimeString()}]</span> <span class="${step.pct === 100 ? 'status-ok' : 'status-warn'}">✓</span> <span>${step.log}</span>`;
+    logLine.innerHTML = `<span class="timestamp">[${new Date().toLocaleTimeString()}]</span> <span class="${isFinished ? 'status-ok' : 'status-warn'}">${isFinished ? '✓' : '⟳'}</span> <span>${msg}</span>`;
     elements.hudTelemetryLog.appendChild(logLine);
     elements.hudTelemetryLog.scrollTop = elements.hudTelemetryLog.scrollHeight;
   }
 
-  // Execute Analysis
-  const result = await analyzeThreatContent(payload);
+  appendLog('Initializing multi-modal inspection pipeline...');
+
+  // Start real threat analysis asynchronously
+  const analysisPromise = analyzeThreatContent(payload);
+
+  let progress = 15;
+  const progressMessages = [
+    { target: 35, msg: 'Extracting destination hyperlinks & unraveling redirects...' },
+    { target: 58, msg: 'Querying live VirusTotal domain reputation intelligence...' },
+    { target: 78, msg: 'Connecting to Google Gemini 3.5 Flash neural threat engine...' },
+    { target: 92, msg: 'Synthesizing contextual threat vectors & psychological markers...' }
+  ];
+
+  let msgIndex = 0;
+  let isDone = false;
+
+  const progressInterval = setInterval(() => {
+    if (isDone) return;
+    if (msgIndex < progressMessages.length) {
+      const step = progressMessages[msgIndex];
+      if (progress < step.target) {
+        progress += 3;
+        elements.hudProgressBar.style.width = `${progress}%`;
+        elements.hudPercent.textContent = `${progress}% (Analyzing...)`;
+      } else {
+        appendLog(step.msg);
+        msgIndex++;
+      }
+    } else if (progress < 94) {
+      progress += 1;
+      elements.hudProgressBar.style.width = `${progress}%`;
+      elements.hudPercent.textContent = `${progress}% (Finalizing...)`;
+    }
+  }, 180);
+
+  let result;
+  try {
+    result = await analysisPromise;
+  } catch (err) {
+    console.error('Analysis error:', err);
+  } finally {
+    isDone = true;
+    clearInterval(progressInterval);
+  }
+
+  // ONLY now that the response is 100% ready, hit 100%!
+  elements.hudProgressBar.style.width = '100%';
+  elements.hudPercent.textContent = '100% Complete';
+  appendLog('Threat analysis complete. Launching AI Copilot report...', true);
+
+  await new Promise(r => setTimeout(r, 220));
+
   state.currentAnalysis = result;
 
   // Add to History
