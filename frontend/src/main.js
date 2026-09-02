@@ -599,12 +599,12 @@ function renderAnalysisResult(res) {
   // Threat Tags
   elements.threatTagsGrid.innerHTML = '';
   if (res.threats.length === 0) {
-    elements.threatTagsGrid.innerHTML = `<span class="threat-tag clean">✓ No Malicious Vectors Identified</span>`;
+    elements.threatTagsGrid.innerHTML = `<span class="threat-tag clean">No Malicious Vectors Identified</span>`;
   } else {
     res.threats.forEach(t => {
       const span = document.createElement('span');
       span.className = `threat-tag ${t.level || 'warning'}`;
-      span.innerHTML = `<span>${t.level === 'critical' ? '⚠️' : 'ℹ️'}</span> ${t.name}`;
+      span.textContent = t.name;
       elements.threatTagsGrid.appendChild(span);
     });
   }
