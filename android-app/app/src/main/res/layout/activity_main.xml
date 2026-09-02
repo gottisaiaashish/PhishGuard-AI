@@ -261,12 +261,12 @@
                     android:layout_height="48dp"
                     android:layout_marginTop="12dp"
                     android:backgroundTint="@color/danger_translucent"
-                    android:strokeColor="@color/threat_danger"
-                    android:strokeWidth="1dp"
                     android:text="🚨 Simulate Incoming Bank Scam SMS"
                     android:textColor="@color/threat_danger"
                     android:textStyle="bold"
-                    app:cornerRadius="10dp" />
+                    app:cornerRadius="10dp"
+                    app:strokeColor="@color/threat_danger"
+                    app:strokeWidth="1dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnSimulateWhatsAppScam"
@@ -274,12 +274,12 @@
                     android:layout_height="48dp"
                     android:layout_marginTop="8dp"
                     android:backgroundTint="@color/cyan_translucent"
-                    android:strokeColor="@color/accent_cyan"
-                    android:strokeWidth="1dp"
                     android:text="💬 Simulate WhatsApp Job Scam"
                     android:textColor="@color/accent_cyan"
                     android:textStyle="bold"
-                    app:cornerRadius="10dp" />
+                    app:cornerRadius="10dp"
+                    app:strokeColor="@color/accent_cyan"
+                    app:strokeWidth="1dp" />
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
