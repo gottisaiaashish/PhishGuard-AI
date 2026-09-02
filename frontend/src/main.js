@@ -1,6 +1,7 @@
 import { PRESETS, INITIAL_HISTORY, SAMPLE_SCREENSHOT_SVG } from './data/mockData.js';
 import { analyzeThreatContent } from './services/analyzer.js';
 import { mountFuzzyText } from './components/FuzzyText.js';
+import { mountFaultyTerminal } from './components/FaultyTerminal.js';
 
 // Application State
 const state = {
@@ -90,6 +91,7 @@ const elements = {
 
 // Initialization
 document.addEventListener('DOMContentLoaded', () => {
+  initFaultyTerminalBg();
   initFuzzyHero();
   initHistory();
   initTabs();
@@ -100,6 +102,30 @@ document.addEventListener('DOMContentLoaded', () => {
   initModal();
   updateMetricsRibbon();
 });
+
+// Mount FaultyTerminal Ambient WebGL Background from React Bits
+function initFaultyTerminalBg() {
+  const bgContainer = document.getElementById('faultyTerminalBg');
+  if (!bgContainer) return;
+
+  mountFaultyTerminal(bgContainer, {
+    scale: 1.35,
+    gridMul: [2, 1],
+    digitSize: 1.2,
+    timeScale: 0.35,
+    pause: false,
+    scanlineIntensity: 0.45,
+    glitchAmount: 1.0,
+    flickerAmount: 0.75,
+    noiseAmp: 0.85,
+    curvature: 0.12,
+    tint: '#00ff88', // Exact Glowing Green matrix as in React Bits screenshot
+    mouseReact: true,
+    mouseStrength: 0.35,
+    pageLoadAnimation: true,
+    brightness: 0.52
+  });
+}
 
 // Mount Holographic FuzzyText from React Bits
 function initFuzzyHero() {
