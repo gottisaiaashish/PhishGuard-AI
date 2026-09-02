@@ -121,7 +121,7 @@ body::after {
   padding: 0 1.5rem 4rem 1.5rem;
 }
 
-/* FaultyTerminal WebGL Ambient Canvas Container */
+/* FaultyTerminal WebGL Ambient Canvas Container - Settled Lower */
 .faulty-terminal-bg {
   position: fixed;
   top: 0;
@@ -133,6 +133,22 @@ body::after {
   overflow: hidden;
   opacity: 0.32;
   mix-blend-mode: screen;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 230px,
+    rgba(0, 0, 0, 0.4) 340px,
+    rgba(0, 0, 0, 1) 500px,
+    rgba(0, 0, 0, 0.85) 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 230px,
+    rgba(0, 0, 0, 0.4) 340px,
+    rgba(0, 0, 0, 1) 500px,
+    rgba(0, 0, 0, 0.85) 100%
+  );
   transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -143,6 +159,6 @@ body::after {
   left: 0;
   width: 100%;
   height: 100%;
-  background: radial-gradient(circle at 50% 30%, rgba(7, 10, 18, 0.45) 0%, rgba(7, 10, 18, 0.92) 80%);
+  background: radial-gradient(circle at 50% 60%, rgba(7, 10, 18, 0.3) 0%, rgba(7, 10, 18, 0.95) 85%);
   pointer-events: none;
 }
