@@ -44,17 +44,21 @@ export async function analyzeThreatContent({ type, sender = '', subject = '', te
   // 0. Primary Server: Call Dedicated FastAPI Backend (Render) if configured
   if (BACKEND_API_URL) {
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
       const res = await fetch(`${BACKEND_API_URL.replace(/\/$/, '')}/api/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type, sender, subject, text, filename, imageBase64 })
+        body: JSON.stringify({ type, sender, subject, text, filename, imageBase64 }),
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
       if (res.ok) {
         const backendData = await res.json();
         return backendData;
       }
     } catch (err) {
-      console.warn('Backend API call failed, falling back to client-side AI engine:', err);
+      console.warn('Backend API call timed out or failed, falling back to client-side AI engine:', err);
     }
   }
 
@@ -456,17 +460,21 @@ export async function askGeminiFollowUp({ question, context = {} }) {
   // 1. Try Backend API first
   if (BACKEND_API_URL) {
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
       const res = await fetch(`${BACKEND_API_URL.replace(/\/$/, '')}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question, context })
+        body: JSON.stringify({ question, context }),
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
       if (res.ok) {
         const data = await res.json();
         if (data.answer) return data.answer;
       }
     } catch (err) {
-      console.warn('Backend chat API failed, falling back to direct or local assistant:', err);
+      console.warn('Backend chat API timed out or failed, falling back to direct or local assistant:', err);
     }
   }
 
