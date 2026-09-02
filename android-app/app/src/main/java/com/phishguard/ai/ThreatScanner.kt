@@ -38,7 +38,7 @@ object ThreatScanner {
         .readTimeout(6, TimeUnit.SECONDS)
         .build()
 
-    private val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+    private val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
 
     // Scam urgency & financial keywords
     private val URGENCY_PATTERN = Pattern.compile("(?i)(urgent|immediate|suspend|action required|freeze|unauthorized|blocked|kyc|pan card|aadhaar|debit card|credit card|lottery|kbc|winner|won|cashback|electricity|power cut|disconnect|part-time|salary|deposit|bonus|verify now|click here|apk|claim|prize|bank|account blocked)")

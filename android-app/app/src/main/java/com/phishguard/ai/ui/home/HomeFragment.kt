@@ -106,7 +106,6 @@ class HomeFragment : Fragment() {
             val tvSender = itemView.findViewById<TextView>(R.id.tvFeedSender)
             val tvTime = itemView.findViewById<TextView>(R.id.tvFeedTime)
             val tvVerdictBadge = itemView.findViewById<TextView>(R.id.tvFeedVerdictBadge)
-            val tvVerdictDetail = itemView.findViewById<TextView>(R.id.tvFeedVerdictDetail)
             val tvSnippet = itemView.findViewById<TextView>(R.id.tvFeedMessageSnippet)
             val layoutAdvice = itemView.findViewById<View>(R.id.layoutFeedThreatAdvice)
             val tvAdvice = itemView.findViewById<TextView>(R.id.tvFeedThreatAdvice)
@@ -115,51 +114,47 @@ class HomeFragment : Fragment() {
             val appDisplayName = try {
                 val pm = requireContext().packageManager
                 val appInfo = pm.getApplicationInfo(log.app, 0)
-                pm.getApplicationLabel(appInfo).toString().uppercase()
+                pm.getApplicationLabel(appInfo).toString()
             } catch (e: Exception) {
                 val appLower = log.app.lowercase()
                 when {
-                    appLower.contains("whatsapp") -> "WHATSAPP"
-                    appLower.contains("telegram") -> "TELEGRAM"
+                    appLower.contains("whatsapp") -> "WhatsApp"
+                    appLower.contains("snapchat") -> "Snapchat"
+                    appLower.contains("telegram") -> "Telegram"
                     appLower.contains("sms") || appLower.contains("mms") || appLower.contains("messaging") -> "SMS"
-                    appLower.contains("gmail") || appLower.contains("mail") -> "EMAIL"
-                    appLower.contains("instagram") -> "INSTAGRAM"
-                    else -> "APP NOTIFICATION"
+                    appLower.contains("gmail") || appLower.contains("mail") -> "Email"
+                    appLower.contains("instagram") -> "Instagram"
+                    else -> log.app.substringAfterLast('.').replaceFirstChar { it.uppercase() }
                 }
             }
             tvAppBadge.text = appDisplayName
             tvAppBadge.setTextColor(cyanColor)
-            tvAppBadge.setBackgroundResource(R.drawable.card_cyan_border)
 
-            tvSender.text = log.sender.ifBlank { "Unknown Sender" }
+            tvSender.text = log.sender.ifBlank { appDisplayName }
             tvTime.text = log.time
             tvSnippet.text = log.text
 
             if (log.isThreat) {
                 card.strokeColor = dangerColor
                 card.setCardBackgroundColor(Color.parseColor("#140D18"))
-                tvVerdictBadge.text = "BLOCKED • THREAT"
+                tvVerdictBadge.text = "BLOCKED"
                 tvVerdictBadge.setTextColor(dangerColor)
                 tvVerdictBadge.setBackgroundResource(R.drawable.card_danger_border)
-                tvVerdictDetail.text = log.verdict.ifBlank { "Phishing Scam Intercepted" }
-                tvVerdictDetail.setTextColor(dangerColor)
                 layoutAdvice.visibility = View.VISIBLE
-                tvAdvice.text = "High-risk lure intercepted. Do not click links or reply."
+                tvAdvice.text = log.verdict.ifBlank { "Dangerous scam lure intercepted." }
             } else {
                 card.strokeColor = Color.parseColor("#1E293B")
-                card.setCardBackgroundColor(Color.parseColor("#0C1322"))
-                tvVerdictBadge.text = "VERIFIED SAFE"
+                card.setCardBackgroundColor(Color.parseColor("#0A1222"))
+                tvVerdictBadge.text = "SAFE"
                 tvVerdictBadge.setTextColor(safeColor)
                 tvVerdictBadge.setBackgroundResource(R.drawable.card_safe_border)
-                tvVerdictDetail.text = "No malicious links or scam triggers detected"
-                tvVerdictDetail.setTextColor(mutedColor)
                 layoutAdvice.visibility = View.GONE
             }
 
             card.setOnClickListener {
                 AlertDialog.Builder(requireContext())
                     .setTitle(if (log.isThreat) "Security Alert Audit" else "Message Inspection Audit")
-                    .setMessage("Sender: ${log.sender}\nChannel: ${tvAppBadge.text}\nTime: ${log.time}\nStatus: ${if (log.isThreat) "THREAT BLOCKED" else "SAFE"}\nVerdict: ${log.verdict}\n\nIntercepted Message:\n${log.text}")
+                    .setMessage("App: $appDisplayName\nSender: ${log.sender}\nTime: ${log.time}\nStatus: ${if (log.isThreat) "THREAT BLOCKED" else "SAFE"}\nVerdict: ${log.verdict}\n\nIntercepted Message:\n${log.text}")
                     .setPositiveButton("Dismiss", null)
                     .show()
             }
